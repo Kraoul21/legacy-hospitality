@@ -1,0 +1,255 @@
+/* ==========================================================================
+   Shelter&Co — charte « urbaine » commune aux pages de l'espace client
+   Fond ivoire, texte graphite, verre dépoli, bords arrondis, touches de couleur.
+   ========================================================================== */
+
+:root {
+  --bg: #FAF7F0;     /* blanc ivoire */
+  --bg-2: #F1ECE2;
+  --text: #17181B;       /* graphite */
+  --text-2: rgba(23, 24, 27, 0.68);
+  --muted: #77736C;
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-2: rgba(255, 255, 255, 0.9);
+  --stroke: rgba(23, 24, 27, 0.13);
+  --stroke-2: rgba(23, 24, 27, 0.22);
+  --card-bg: linear-gradient(160deg, #FFFFFF, #FDFCFA);
+  --on-accent: #17181B;  /* texte posé sur une couleur d'accent */
+  --coral: #FF7A59;
+  --lime: #D5F36B;
+  --blue: #6FA0FF;
+  --violet: #B79BFF;
+  /* versions foncées des accents, lisibles en texte sur l'ivoire */
+  --coral-ink: #C9471F;
+  --lime-ink: #5E7F0A;
+  --mint: #5CCFAE;           /* Bienvenue : vert menthe, pastel comme le bleu et le violet */
+  --mint-ink: #1D8466;
+  --rose: #F4B3CB;           /* Mes avantages : rose poudré */
+  --rose-ink: #B23A6E;
+  --blue-ink: #2F62D6;
+  --violet-ink: #6D4FD8;
+  --accent: var(--blue);            /* couleur de la page, redéfinie par page */
+  --radius: 24px;
+  --radius-sm: 16px;
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --shadow: 0 2px 6px rgba(60, 45, 30, 0.06), 0 22px 44px -24px rgba(60, 45, 30, 0.38);
+  --shadow-up: 0 30px 60px -24px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* pas de surlignage gris au toucher sur mobile */
+* { -webkit-tap-highlight-color: transparent; }
+
+html { background: var(--bg); }
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(900px 520px at 100% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%),
+    radial-gradient(900px 600px at 0% 100%, rgba(255, 122, 89, 0.08), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+
+/* Petites étiquettes en capitales (remplace l'ancienne police mono) */
+.mono {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.amp {
+  background: linear-gradient(120deg, var(--coral), var(--violet) 55%, var(--blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------- Titres et retour ---------- */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: var(--glass);
+  color: var(--muted);
+  text-decoration: none;
+  transition: color .2s ease, background .2s ease;
+}
+
+.back:hover { color: var(--text); background: var(--glass-2); }
+
+.page-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.4rem, 7vw, 4.6rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+}
+
+/* ---------- Surfaces en verre ---------- */
+.glass {
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  border: 1px solid var(--stroke);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--text);
+}
+
+.pill.accent {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* ---------- Boutons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke-2);
+  background: var(--glass);
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .25s ease, color .25s ease, border-color .25s ease, transform .35s var(--ease);
+}
+
+.btn:hover { background: var(--glass-2); transform: translateY(-2px); }
+
+.btn-primary {
+  border: none;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+  box-shadow: 0 14px 30px -14px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 85%, white); }
+
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ---------- Champs de formulaire ---------- */
+.input, input[type="text"], input[type="email"], input[type="tel"], input[type="time"], input[type="number"], textarea {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--stroke);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+  color-scheme: light;
+}
+
+input::placeholder, textarea::placeholder { color: rgba(23, 24, 27, 0.38); }
+
+input:focus, textarea:focus {
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  background: #fff;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+  outline: none;
+}
+
+input[readonly] { color: var(--muted); }
+
+/* ---------- Animations ---------- */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* espace des milliers bien visible dans les grands chiffres (1 500, 12 480) */
+.big, .date, .stat, .pts { word-spacing: 0.14em; }
+
+/* ---------- Statut Silver : rendu argenté métallique ---------- */
+.silver {
+  background: linear-gradient(135deg, #FDFDFE 0%, #DCDFE4 32%, #AEB4BD 55%, #E8EAEE 78%, #C3C8CF 100%) !important;
+  border: 1px solid #A3A9B2 !important;
+  color: #2B2E34 !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 6px 16px -8px rgba(90, 96, 106, 0.55);
+}
+
+.silver::before, .silver .dot {
+  background: radial-gradient(circle at 35% 30%, #FFFFFF, #B9BEC6 55%, #7D838D) !important;
+  box-shadow: 0 0 6px rgba(160, 166, 176, 0.9) !important;
+}
+
+/* mot « Silver » en texte argenté */
+.silver-text {
+  background: linear-gradient(120deg, #5C626B 0%, #9AA0A9 40%, #4F555E 70%, #858B94 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 600;
+}
+
+/* sur photo ou fond sombre : argent clair */
+.silver-text.on-dark {
+  background: linear-gradient(120deg, #F4F5F7 0%, #C5CAD1 45%, #FFFFFF 70%, #AEB4BD 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* ---------- Arrivée depuis une tuile de Mon espace ---------- */
+.portal-in main:not(.content), .portal-in .layout {
+  animation: portal-rise .75s .05s var(--ease) both;
+}
+
+@keyframes portal-rise {
+  from { opacity: 0; transform: translateY(28px) scale(.985); }
+  to   { opacity: 1; transform: none; }
+}
