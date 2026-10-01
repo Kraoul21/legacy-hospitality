@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon profil — Shelter&amp;Co</title>
+  <script>
+    // Arrivée depuis une tuile de Mon espace : le contenu arrive en glissant
+    try {
+      if (sessionStorage.getItem('lhg-portal')) document.documentElement.classList.add('portal-in');
+      sessionStorage.removeItem('lhg-portal');
+    } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/urbain.css">
+  <style>
+    :root {
+      --accent: var(--violet);
+      --bar: 0px;
+      /* Mon profil : uniquement des nuances de violet */
+      --v-profond: #6E4FD8;   /* Mon portefeuille : violet profond */
+      --v-indigo: #8F73F2;    /* Mon calendrier : violet soutenu */
+      --v-violet: #B6A1FF;    /* Points de fidélité : violet moyen */
+      --v-lavande: #DDD1FF;   /* Mes avantages : lavande pâle */
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr);
+      gap: 8px;
+      max-width: 1320px;
+      margin: 0 auto;
+      min-height: calc(100vh - var(--bar));
+    }
+
+    /* ---------- Bandeau vertical (verre flottant) ---------- */
+    .side {
+      position: sticky;
+      top: calc(var(--bar) + 14px);
+      align-self: start;
+      height: calc(100vh - var(--bar) - 28px);
+      margin: 14px 0 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+      padding: 24px 18px;
+      border-radius: 28px;
+      overflow: hidden;
+      isolation: isolate;
+      background: var(--card-bg);
+      border: 1px solid var(--stroke);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      box-shadow: var(--shadow);
+    }
+
+    /* halo de couleur : dégradé qui épouse l'arrondi (pas de cercle flouté qui déborde) */
+    .side::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(360px 260px at 0% 100%, color-mix(in srgb, var(--violet) 32%, transparent), transparent 70%);
+      opacity: .7;
+      z-index: -1;
+      pointer-events: none;
+      transition: opacity .45s ease;
+    }
+
+    .back { align-self: flex-start; }
+
+    .side h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: 2.6rem;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+    }
+
+    .tabs { display: flex; flex-direction: column; gap: 10px; }
+
+    .tab {
+      --c: var(--violet);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--stroke);
+      background: #fff;
+      color: var(--text);
+      box-shadow: 0 1px 3px rgba(60, 45, 30, 0.06);
+      text-align: left;
+      cursor: pointer;
+      transition: background .3s ease, color .3s ease, border-color .3s ease, transform .4s var(--ease);
+    }
+
+    #tab-portefeuille { --c: var(--v-profond); }
+    #tab-calendrier { --c: var(--v-indigo); }
+    #tab-points { --c: var(--v-violet); }
+    #tab-avantages { --c: var(--v-lavande); }
+    #tab-portefeuille[aria-selected="true"],
+    #tab-calendrier[aria-selected="true"] { color: #fff; } /* texte blanc sur le violet profond */
+
+    .tab .idx {
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--stroke-2);
+      letter-spacing: 0.04em;
+      transition: background .3s ease, color .3s ease, border-color .3s ease;
+    }
+
+    .tab .label {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      display: flex;
+      justify-content: space-between;
+      flex: 1;
+      gap: 8px;
+    }
+
+    .tab .label span { opacity: 0; transform: translateX(-6px); transition: opacity .3s ease, transform .3s var(--ease); }
+
+    .tab:hover { border-color: color-mix(in srgb, var(--c) 60%, transparent); transform: translateY(-2px); }
+
+    .tab[aria-selected="true"] {
+      color: var(--on-accent);
+      background: var(--c);
+      border-color: var(--c);
+      box-shadow: 0 16px 34px -16px color-mix(in srgb, var(--c) 75%, transparent);
+    }
+
+    .tab[aria-selected="true"] .idx { background: #fff; border-color: #fff; color: var(--text); }
+    .tab[aria-selected="true"] .label span { opacity: 1; transform: none; }
+
+    .side-foot { margin-top: auto; color: var(--muted); }
+
+    /* ---------- Contenu ---------- */
+    .content {
+      min-width: 0;
+      padding: 30px 28px 72px;
+      max-width: 1000px;
+    }
+
+    .panel[hidden] { display: none; }
+    .panel { animation: rise .55s var(--ease) both; }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 26px;
+    }
+
+    .panel-head h2 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: clamp(2.2rem, 5.5vw, 4rem);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--violet) 16%, transparent);
+      border: 1px solid color-mix(in srgb, var(--violet) 45%, transparent);
+    }
+
+    .tag::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--violet);
+      box-shadow: 0 0 12px var(--violet);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .cards[hidden] { display: none; }
+
+    .card {
+      --c: var(--violet);
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 26px;
+      min-height: 170px;
+      padding: 22px;
+      border-radius: var(--radius);
+      background: var(--card-bg);
+      border: 1px solid var(--stroke);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: var(--shadow);
+      transition: transform .45s var(--ease), box-shadow .45s var(--ease), border-color .45s ease;
+    }
+
+    /* halo de couleur : dégradé qui épouse l'arrondi (pas de cercle flouté qui déborde) */
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(360px 260px at 100% 0%, color-mix(in srgb, var(--c) 32%, transparent), transparent 70%);
+      opacity: .7;
+      z-index: -1;
+      pointer-events: none;
+      transition: opacity .45s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: color-mix(in srgb, var(--c) 45%, transparent);
+      box-shadow: 0 30px 60px -24px color-mix(in srgb, var(--c) 40%, transparent);
+    }
+
+    .card:hover::before { opacity: 1; }
+
+    .card.wide { grid-column: 1 / -1; }
+
+    /* carte « mise en avant » : dégradé coloré */
+    .card.dark {
+      background:
+        radial-gradient(420px 220px at 100% 0%, color-mix(in srgb, var(--c) 45%, transparent), transparent 70%),
+        linear-gradient(150deg, #24222E, #17181C);
+      border-color: color-mix(in srgb, var(--c) 30%, transparent);
+    }
+
+    .card.dark .k { color: rgba(245, 245, 247, 0.7); }
+
+    .k { color: var(--muted); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+
+    .big {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: clamp(2.6rem, 7vw, 4.4rem);
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+    }
+
+    .big small {
+      font-size: 0.34em;
+      font-weight: 600;
+      letter-spacing: 0;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
+    .v {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.1rem, 2vw, 1.35rem);
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+
+    .v-sub { color: var(--muted); margin-top: 8px; }
+
+    .progress {
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(23, 24, 27, 0.08);
+      overflow: hidden;
+    }
+
+    .progress i {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--v-violet), var(--v-profond));
+      box-shadow: 0 0 18px color-mix(in srgb, var(--violet) 60%, transparent);
+    }
+
+    .scale { display: flex; justify-content: space-between; margin-top: 10px; color: var(--text); }
+
+    .rows { list-style: none; }
+
+    .rows li {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      padding: 14px 0;
+      border-top: 1px solid var(--stroke);
+    }
+
+    .rows li:first-child { border-top: none; padding-top: 0; }
+
+    .rows .pts {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      white-space: nowrap;
+      color: var(--violet-ink);
+    }
+
+    .rows li.doc { align-items: center; }
+    .rows li.doc .pts { color: var(--text); }
+    .doc-end { display: flex; align-items: center; gap: 14px; }
+
+    .dl {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: 1px solid var(--stroke-2);
+      background: var(--glass);
+      transition: background .2s ease, color .2s ease, transform .3s var(--ease);
+    }
+
+    .dl:hover { background: var(--violet); color: var(--on-accent); transform: translateY(-2px); }
+    .dl svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+    .status {
+      align-self: flex-start;
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke-2);
+      color: var(--muted);
+    }
+
+    .status.on {
+      background: color-mix(in srgb, var(--v-lavande) 70%, transparent);
+      border-color: color-mix(in srgb, var(--v-lavande) 100%, transparent);
+      color: var(--violet-ink);
+    }
+
+    .group-title {
+      margin: 40px 0 16px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .panel-head + .group-title { margin-top: 0; }
+
+    /* couleur des cartes selon l'onglet */
+    #panel-portefeuille .card { --c: var(--v-profond); }
+    #panel-calendrier .card { --c: var(--v-indigo); }
+    #panel-points .card { --c: var(--v-violet); }
+    #panel-avantages .card { --c: var(--v-lavande); }
+    #panel-portefeuille .card.dark { --c: var(--violet); }
+
+    /* ---------- Mon calendrier ---------- */
+    .card.month { gap: 18px; min-height: 0; }
+    .month-name { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.5rem; letter-spacing: -0.02em; text-transform: capitalize; }
+
+    .grid7 { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 6px; text-align: center; }
+    .grid7 .wd { color: var(--muted); padding-bottom: 6px; }
+
+    .day {
+      position: relative;
+      display: grid;
+      place-items: center;
+      height: 46px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+    .day.out { visibility: hidden; }
+    .day.stay { color: var(--text); background: color-mix(in srgb, var(--v-indigo) 18%, transparent); }
+    .day.first { border-radius: 999px 0 0 999px; }
+    .day.last { border-radius: 0 999px 999px 0; }
+    .day.first.last { border-radius: 999px; }
+    .day.first > span:first-child, .day.last > span:first-child {
+      display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
+      background: var(--v-profond); color: #fff; box-shadow: 0 8px 18px -8px var(--v-profond);
+    }
+    .day a { position: absolute; inset: 0; border-radius: inherit; }
+    .day .dots { position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); display: flex; gap: 3px; }
+    .day .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--v-indigo); }
+    .day.first .dots, .day.last .dots { bottom: -1px; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--muted); }
+    .legend span { display: inline-flex; align-items: center; gap: 8px; }
+    .legend i { width: 10px; height: 10px; border-radius: 50%; }
+
+    .agenda { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; }
+    .agenda .card { flex-direction: row; justify-content: flex-start; gap: 22px; min-height: 0; scroll-margin-top: 20px; }
+    .agenda .card:target { border-color: var(--v-indigo); }
+
+    .date-col { flex: 0 0 74px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+    .date-col .num { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 2.6rem; line-height: .9; letter-spacing: -0.03em; }
+    .date-col .mono { color: var(--muted); }
+
+    .events { flex: 1; min-width: 0; list-style: none; }
+    .events li {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 0;
+      border-top: 1px solid var(--stroke);
+    }
+    .events li:first-child { border-top: none; padding-top: 2px; }
+    .events .time { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; }
+    .events .time small { display: block; font-family: 'Inter', sans-serif; font-weight: 500; font-size: .78rem; color: var(--muted); }
+    .events .pill { padding: 5px 11px; border-radius: 999px; white-space: nowrap; }
+    .events .pill.stay { background: var(--v-profond); color: #fff; }
+    .events .pill.act { background: color-mix(in srgb, var(--v-indigo) 20%, transparent); color: var(--violet-ink); }
+    .events .empty { color: var(--muted); display: block; }
+    .events .empty a { color: var(--violet-ink); text-decoration: underline; text-underline-offset: 3px; }
+
+    @media (max-width: 640px) {
+      .agenda .card { flex-direction: column; gap: 14px; }
+      .date-col { flex-direction: row; align-items: baseline; gap: 10px; }
+      .events li { grid-template-columns: 64px minmax(0, 1fr); }
+      .events .pill { grid-column: 2; justify-self: start; }
+      .day { height: 40px; }
+      .day.first > span:first-child, .day.last > span:first-child { width: 34px; height: 34px; }
+    }
+
+    /* ---------- Legacy Points ---------- */
+    .credit-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .lp { display: inline-block; flex-shrink: 0; vertical-align: middle; }
+    .lp-lg { width: 0.8em; height: 0.8em; margin-right: 14px; filter: drop-shadow(0 0 18px rgba(183, 155, 255, 0.5)); }
+    .lp-sm { width: 18px; height: 18px; margin-right: 6px; }
+    .lp-big { display: flex; align-items: center; }
+
+    .btn-light {
+      background: var(--violet);
+      border: none;
+      color: var(--on-accent);
+      font-weight: 600;
+    }
+
+    .btn-light:hover { background: color-mix(in srgb, var(--violet) 85%, white); }
+
+    .price {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 12px 5px 6px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--stroke-2);
+      color: var(--text);
+      letter-spacing: 0.08em;
+    }
+
+    .card.activity { gap: 20px; }
+
+    .act-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .act-foot .ok { color: var(--violet-ink); }
+    .act-foot .short { color: var(--muted); }
+    .earn { margin-top: 10px; color: var(--violet-ink); font-weight: 600; }
+    .new {
+      display: inline-block; vertical-align: middle; margin-left: 6px; padding: 3px 8px;
+      border-radius: 999px; background: var(--v-lavande); color: var(--violet-ink); font-size: .62rem;
+    }
+
+    .act-foot .booked { color: var(--v-profond); font-weight: 600; }
+
+    /* ---------- Fenêtre « Ajouter de l'argent » ---------- */
+    .money {
+      margin: auto;
+      width: min(460px, calc(100vw - 32px));
+      padding: 0;
+      border-radius: 28px;
+      border: 1px solid var(--stroke-2);
+      background: linear-gradient(160deg, #FFFFFF, #F6F2EA);
+      color: var(--text);
+      box-shadow: 0 40px 90px -30px rgba(60, 45, 30, 0.45);
+      overflow: hidden;
+    }
+
+    .money::backdrop {
+      background: rgba(40, 32, 24, 0.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .money[open] { animation: rise .4s var(--ease) both; }
+
+    .money-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 16px 8px 24px;
+      color: var(--muted);
+    }
+
+    .money-body { padding: 8px 24px 24px; display: flex; flex-direction: column; gap: 18px; }
+
+    .money h3 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: 2rem;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .amounts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+    .amounts button {
+      padding: 13px 0;
+      border-radius: 16px;
+      border: 1px solid var(--stroke-2);
+      background: var(--glass);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background .2s ease, color .2s ease, border-color .2s ease;
+    }
+
+    .amounts button:hover { background: var(--glass-2); }
+    .amounts button[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: var(--on-accent); }
+
+    .custom {
+      display: flex;
+      align-items: center;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: #fff;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+    .custom:focus-within {
+      border-color: color-mix(in srgb, var(--violet) 70%, transparent);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--violet) 18%, transparent);
+    }
+
+    .custom input { border: none; background: transparent; box-shadow: none; }
+    .custom input:focus { box-shadow: none; background: transparent; }
+    .custom span { padding: 0 16px; font-weight: 600; color: var(--muted); }
+
+    .money .confirm {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      border: none;
+      border-radius: 999px;
+      background: var(--violet);
+      color: var(--on-accent);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      cursor: pointer;
+      box-shadow: 0 18px 36px -16px color-mix(in srgb, var(--violet) 75%, transparent);
+      transition: filter .2s ease, transform .3s var(--ease);
+    }
+
+    .money .confirm:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-2px); }
+    .money .confirm:disabled { opacity: .4; cursor: not-allowed; }
+
+    .money-note { color: var(--violet-ink); min-height: 1.2em; }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid var(--stroke-2);
+      background: var(--glass);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background .2s ease;
+    }
+
+    .icon-btn:hover { background: var(--glass-2); }
+
+    .missing {
+      padding: 48px 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.3rem;
+    }
+
+    @media (max-width: 860px) {
+      :root { --bar: 0px; }
+      .layout { grid-template-columns: 138px minmax(0, 1fr); gap: 0; }
+      .side { margin: 10px 0 10px 10px; padding: 16px 8px; gap: 18px; border-radius: 22px; top: calc(var(--bar) + 10px); height: calc(100vh - var(--bar) - 20px); }
+      .side h1 { font-size: 1.35rem; padding: 0 6px; }
+      .back { padding: 7px 10px; font-size: 0.62rem; }
+      .tab { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 8px; }
+      .tab .label { font-size: 0.72rem; hyphens: auto; -webkit-hyphens: auto; }
+      .tab .label span { display: none; }
+      .side-foot { display: none; }
+      .content { padding: 22px 14px 56px; }
+      .cards { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+      .card { min-height: 130px; padding: 18px; }
+      .amounts { grid-template-columns: repeat(2, 1fr); }
+    }
+
+
+    /* cartes « mise en avant » : fond sombre, texte clair */
+    .card.dark { color: #F5F5F7; }
+    .card.dark .big small { color: rgba(245, 245, 247, 0.6); }
+  </style>
+</head>
+<body>
+  <!-- Logo de la monnaie Legacy Points (pièce frappée d'un L) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="lp-logo" viewBox="0 0 32 32">
+      <circle cx="16" cy="16" r="15" fill="#B79BFF" stroke="#121316" stroke-width="1.5"/>
+      <circle cx="16" cy="16" r="11.5" fill="none" stroke="#121316" stroke-width="1" stroke-dasharray="1.6 1.8"/>
+      <path d="M12.5 9.5v13h8" fill="none" stroke="#121316" stroke-width="3.2" stroke-linecap="square"/>
+    </symbol>
+  </svg>
+
+  <div class="layout">
+    <aside class="side">
+      <a class="back mono" id="back" href="shelter-co.html#espace">← Mon espace</a>
+      <h1>Mon profil</h1>
+
+      <nav class="tabs" role="tablist" aria-orientation="vertical" aria-label="Mon profil">
+        <button class="tab" role="tab" id="tab-portefeuille" aria-controls="panel-portefeuille" data-tab="portefeuille">
+          <span class="idx mono">01</span>
+          <span class="label">Mon portefeuille <span>→</span></span>
+        </button>
+        <button class="tab" role="tab" id="tab-calendrier" aria-controls="panel-calendrier" data-tab="calendrier">
+          <span class="idx mono">02</span>
+          <span class="label">Mon calendrier <span>→</span></span>
+        </button>
+        <button class="tab" role="tab" id="tab-points" aria-controls="panel-points" data-tab="points">
+          <span class="idx mono">03</span>
+          <span class="label">Points de fidélité <span>→</span></span>
+        </button>
+        <button class="tab" role="tab" id="tab-avantages" aria-controls="panel-avantages" data-tab="avantages">
+          <span class="idx mono">04</span>
+          <span class="label">Mes avantages <span>→</span></span>
+        </button>
+      </nav>
+
+      <span class="side-foot mono" id="ref">Réservation —</span>
+    </aside>
+
+    <main class="content" id="content"></main>
+  </div>
+
+  <dialog class="money" id="money" aria-labelledby="money-title">
+    <div class="money-head mono">
+      <span>Mon portefeuille</span>
+      <button class="icon-btn" id="money-close" type="button" aria-label="Fermer">✕</button>
+    </div>
+    <form class="money-body" id="money-form" method="dialog" novalidate>
+      <h3 id="money-title">Ajouter de l’argent</h3>
+      <div class="amounts" role="group" aria-label="Montant">
+        <button type="button" data-amount="50">50 €</button>
+        <button type="button" data-amount="100">100 €</button>
+        <button type="button" data-amount="200">200 €</button>
+        <button type="button" data-amount="500">500 €</button>
+      </div>
+      <label class="custom">
+        <input id="money-amount" type="number" min="1" step="1" inputmode="numeric" placeholder="Autre montant" aria-label="Autre montant">
+        <span>€</span>
+      </label>
+      <button class="confirm" id="money-confirm" type="submit" disabled>
+        <span>Continuer</span><span aria-hidden="true">→</span>
+      </button>
+      <p class="money-note mono" id="money-note" role="status"></p>
+    </form>
+  </dialog>
+
+  <script src="assets/activites-data.js"></script>
+  <script>
+    const ACT = window.LHG_ACTIVITES;
+    // Données de démonstration — à remplacer par la vraie base clients
+    const PROFILES = {
+      '012345': {
+        tier: 'Silver',
+        nextTier: 'Gold',
+        tierStart: 5000,   // seuil du statut actuel (Silver)
+        nextTierAt: 15000, // seuil du statut suivant (Gold)
+        // Le solde affiché est la somme de cet historique (12 480 points)
+        history: [
+          { label: 'Shelter&Co Paris — 2 nuits', date: 'Mai 2026',   pts: 900 },
+          { label: 'Parrainage d’un ami',        date: 'Avr. 2026',  pts: 1000 },
+          { label: 'Bonus de statut Silver',     date: 'Mars 2026',  pts: 1000 },
+          { label: 'Shelter&Co Paris — 7 nuits', date: 'Févr. 2026', pts: 3150 },
+          { label: 'Restaurant & spa',           date: 'Févr. 2026', pts: 1380 },
+          { label: 'Shelter&Co Paris — 4 nuits', date: 'Déc. 2025',  pts: 1800 },
+          { label: 'Bonus anniversaire',         date: 'Oct. 2025',  pts: 500 },
+          { label: 'Shelter&Co Paris — 5 nuits', date: 'Juil. 2025', pts: 2250 },
+          { label: 'Bienvenue dans le programme', date: 'Janv. 2025', pts: 500 },
+        ],
+        perks: [
+          { name: 'Late check-out', detail: "Jusqu'à 14:00", status: 'Inclus', on: true },
+          { name: 'Petit-déjeuner', detail: 'Offert chaque matin', status: 'Inclus', on: true },
+          { name: 'Surclassement', detail: 'Selon disponibilité à l’arrivée', status: 'Sur demande', on: false },
+          { name: 'Wi-Fi premium', detail: 'Très haut débit', status: 'Inclus', on: true },
+        ],
+        vouchers: [
+          { name: 'Spa — 20 %', until: 'Valable jusqu’au 31 déc. 2026' },
+          { name: 'Dîner pour deux', until: 'Valable jusqu’au 15 oct. 2026' },
+        ],
+        wallet: {
+          // Solde de Legacy Points et activités : voir assets/activites-data.js
+          // Factures et reçus (PDF dans le dossier documents/) — masqués pour l'instant
+          showInvoices: false,
+          invoices: [
+            { label: 'Rechargement du portefeuille', kind: 'Reçu', date: '12 sept. 2026', amount: '150,00 €', file: 'documents/recu-R-2026-0912.pdf' },
+            { label: 'Séjour mai 2026 — 2 nuits',   kind: 'Facture', date: '20 mai 2026',  amount: '412,00 €', file: 'documents/facture-F-2026-0518.pdf' },
+            { label: 'Séjour déc. 2025 — 4 nuits',  kind: 'Facture', date: '8 déc. 2025',  amount: '700,00 €', file: 'documents/facture-F-2025-1204.pdf' },
+          ],
+        },
+      },
+    };
+
+    const ref = new URLSearchParams(location.search).get('ref');
+    const data = ref && PROFILES[ref];
+    const content = document.getElementById('content');
+    const nfBase = new Intl.NumberFormat('fr-FR');
+    // espace insécable classique (la police n'a pas l'espace fine insécable)
+    const nf = { format: (n) => nfBase.format(n).replace(/\u202F/g, '\u00A0') };
+
+    if (ref) {
+      document.getElementById('ref').textContent = 'Réservation n° ' + ref;
+      document.getElementById('back').href =
+        'shelter-co.html?ref=' + encodeURIComponent(ref) + '#espace';
+    }
+
+    // Monnaie virtuelle Legacy Hospitality Group
+    const LP_RATE = 10; // 1 € = 10 Legacy Points
+    const lpIcon = (cls) =>
+      `<svg class="lp ${cls}" viewBox="0 0 32 32" role="img" aria-label="Legacy Points"><use href="#lp-logo"/></svg>`;
+
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    // ---------- Mon calendrier : séjour + activités réservées ----------
+    const toMin = (h) => { const [a, b] = h.split(':').map(Number); return a * 60 + b; };
+    const fmtH = (m) => String(Math.floor(m / 60)).padStart(2, '0') + 'h' + String(m % 60).padStart(2, '0');
+    const dateOf = (day) => new Date(day + 'T12:00:00');
+    const fmtDate = (day, opts) => dateOf(day).toLocaleDateString('fr-FR', opts);
+
+    function stayEvents(stay, day) {
+      const list = [];
+      if (day === stay.arrival) list.push({
+        start: toMin(stay.arrivalHour), title: 'Arrivée · Check-in',
+        sub: 'Shelter&Co · 24 rue Charlot, 75003 Paris', pill: 'Séjour', cls: 'stay',
+      });
+      if (day === stay.departure) list.push({
+        start: toMin(stay.departureHour), title: 'Départ · Check-out',
+        sub: 'Late check-out · avantage membre Silver', pill: 'Séjour', cls: 'stay',
+      });
+      ACT.getBookings(ref).filter((b) => b.day === day).forEach((b) => {
+        const a = ACT.ACTIVITIES.find((x) => x.id === b.activity);
+        if (!a) return;
+        list.push({
+          start: toMin(b.hour), end: toMin(b.hour) + a.duration,
+          title: a.name, sub: a.place, pill: nf.format(a.cost) + ' LP', cls: 'act',
+        });
+      });
+      return list.sort((x, y) => x.start - y.start);
+    }
+
+    function monthGrid(stay, days, first) {
+      const y = first.getFullYear(), m = first.getMonth();
+      const lead = (first.getDay() + 6) % 7; // semaine commençant le lundi
+      const count = new Date(y, m + 1, 0).getDate();
+      const cells = [];
+      for (let i = 0; i < lead; i++) cells.push('<div class="day out"></div>');
+      for (let n = 1; n <= count; n++) {
+        const day = `${y}-${String(m + 1).padStart(2, '0')}-${String(n).padStart(2, '0')}`;
+        const inStay = days.includes(day);
+        const acts = inStay ? ACT.getBookings(ref).filter((b) => b.day === day).length : 0;
+        const cls = ['day', inStay && 'stay', day === stay.arrival && 'first', day === stay.departure && 'last']
+          .filter(Boolean).join(' ');
+        cells.push(`<div class="${cls}"><span>${n}</span>${acts
+          ? `<span class="dots">${'<i></i>'.repeat(Math.min(acts, 3))}</span>` : ''}${inStay
+          ? `<a href="#jour-${day}" aria-label="${esc(fmtDate(day, { weekday: 'long', day: 'numeric', month: 'long' }))}"></a>` : ''}</div>`);
+      }
+      return `
+        <div class="card month">
+          <span class="month-name">${esc(first.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }))}</span>
+          <div class="grid7">
+            ${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d) => `<span class="wd mono">${d}</span>`).join('')}
+            ${cells.join('')}
+          </div>
+          <div class="legend mono">
+            <span><i style="background:var(--v-profond)"></i>Arrivée / départ</span>
+            <span><i style="background:color-mix(in srgb, var(--v-indigo) 35%, transparent)"></i>Votre séjour</span>
+            <span><i style="background:var(--v-indigo)"></i>Activité réservée</span>
+          </div>
+        </div>`;
+    }
+
+    function calendarPanel() {
+      const stay = ACT.STAYS[ref];
+      if (!stay) return '';
+      const days = ACT.stayDays(stay);
+      const nbActs = ACT.getBookings(ref).filter((b) => days.includes(b.day)).length;
+      const nights = days.length - 1;
+
+      // un mois par mois couvert par le séjour
+      const months = [];
+      for (const d of days) {
+        const first = new Date(dateOf(d).getFullYear(), dateOf(d).getMonth(), 1);
+        if (!months.some((x) => x.getTime() === first.getTime())) months.push(first);
+      }
+
+      const portefeuille = '#portefeuille';
+      return `
+        <section class="panel" id="panel-calendrier" role="tabpanel" aria-labelledby="tab-calendrier" hidden>
+          <div class="panel-head">
+            <h2>Mon calendrier</h2>
+            <span class="tag mono">${nights} nuit${nights > 1 ? 's' : ''} · ${nbActs} activité${nbActs > 1 ? 's' : ''}</span>
+          </div>
+          <div class="cards">${months.map((f) => monthGrid(stay, days, f).replace('card month', 'card month wide')).join('')}</div>
+
+          <div class="agenda">
+            ${days.map((day) => {
+              const ev = stayEvents(stay, day);
+              return `
+              <div class="card" id="jour-${day}">
+                <div class="date-col">
+                  <span class="num">${dateOf(day).getDate()}</span>
+                  <span class="mono">${esc(fmtDate(day, { weekday: 'long' }))}</span>
+                  <span class="mono">${esc(fmtDate(day, { month: 'long' }))}</span>
+                </div>
+                <ul class="events">
+                  ${ev.length ? ev.map((e) => `
+                    <li>
+                      <span class="time">${fmtH(e.start)}${e.end ? `<small>→ ${fmtH(e.end)}</small>` : ''}</span>
+                      <span><span class="v">${esc(e.title)}</span><span class="v-sub mono" style="display:block">${esc(e.sub)}</span></span>
+                      <span class="pill mono ${e.cls}">${esc(e.pill)}</span>
+                    </li>`).join('') : `
+                    <li><span class="empty mono" style="grid-column:1/-1">Journée libre · <a href="${portefeuille}" data-go="portefeuille">réserver une activité</a></span></li>`}
+                </ul>
+              </div>`;
+            }).join('')}
+          </div>
+        </section>`;
+    }
+
+    // Activités réservées en LP → lignes de l'historique des points de fidélité
+    function bookingHistory() {
+      return ACT.getBookings(ref).slice().reverse().map((b) => {
+        const a = ACT.ACTIVITIES.find((x) => x.id === b.activity);
+        const when = new Date(b.bookedAt || Date.now());
+        const month = when.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+        return {
+          label: (a ? a.name : 'Activité') + ' · réservée en Legacy Points',
+          date: month.charAt(0).toUpperCase() + month.slice(1),
+          pts: b.pts != null ? b.pts : a ? ACT.pointsFor(a) : 0,
+          fresh: true,
+        };
+      });
+    }
+
+    function panels(d) {
+      const history = bookingHistory().concat(d.history);
+      d.points = history.reduce((sum, h) => sum + h.pts, 0);
+      const pct = Math.min(100, Math.max(0,
+        Math.round((d.points - d.tierStart) / (d.nextTierAt - d.tierStart) * 100)));
+      const remaining = Math.max(0, d.nextTierAt - d.points);
+
+      return calendarPanel() + `
+        <section class="panel" id="panel-points" role="tabpanel" aria-labelledby="tab-points" hidden>
+          <div class="panel-head">
+            <h2>Points de fidélité</h2>
+            <span class="tag mono ${d.tier === 'Silver' ? 'silver' : ''}">Membre ${esc(d.tier)}</span>
+          </div>
+          <div class="cards">
+            <div class="card dark">
+              <span class="k mono">Solde</span>
+              <div class="big">${nf.format(d.points)}<small>pts</small></div>
+            </div>
+            <div class="card">
+              <span class="k mono">Vers ${esc(d.nextTier)} <span>${pct} %</span></span>
+              <div>
+                <div class="progress" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>
+                <div class="scale mono"><span>${nf.format(d.tierStart)} pts</span><span>${nf.format(d.nextTierAt)} pts</span></div>
+                <p class="v-sub mono">Encore ${nf.format(remaining)} points pour devenir membre ${esc(d.nextTier)}</p>
+              </div>
+            </div>
+            <div class="card wide">
+              <span class="k mono">Historique</span>
+              <ul class="rows">
+                ${history.map((h) => `
+                  <li>
+                    <span><span class="v">${esc(h.label)}${h.fresh ? ' <span class="new mono">Nouveau</span>' : ''}</span><span class="v-sub mono" style="display:block">${esc(h.date)}</span></span>
+                    <span class="pts">+${nf.format(h.pts)}</span>
+                  </li>`).join('')}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-avantages" role="tabpanel" aria-labelledby="tab-avantages" hidden>
+          <div class="panel-head">
+            <h2>Mes avantages</h2>
+            <span class="tag mono ${d.tier === 'Silver' ? 'silver' : ''}">Membre ${esc(d.tier)}</span>
+          </div>
+          <h3 class="group-title">Avantages</h3>
+          <div class="cards">
+            ${d.perks.map((p) => `
+              <div class="card">
+                <span class="status mono ${p.on ? 'on' : ''}">${esc(p.status)}</span>
+                <div>
+                  <div class="v">${esc(p.name)}</div>
+                  <p class="v-sub mono">${esc(p.detail)}</p>
+                </div>
+              </div>`).join('')}
+          </div>
+
+          <h3 class="group-title">Bons cadeaux</h3>
+          <div class="cards">
+            ${d.vouchers.map((v) => `
+              <div class="card">
+                <span class="status mono on">Bon cadeau</span>
+                <div>
+                  <div class="v">${esc(v.name)}</div>
+                  <p class="v-sub mono">${esc(v.until)}</p>
+                </div>
+              </div>`).join('')}
+          </div>
+        </section>
+
+        <section class="panel" id="panel-portefeuille" role="tabpanel" aria-labelledby="tab-portefeuille" hidden>
+          <div class="panel-head">
+            <h2>Mon portefeuille</h2>
+          </div>
+          <div class="cards">
+            <div class="card dark wide">
+              <span class="k mono">Legacy Points disponibles</span>
+              <div class="credit-row">
+                <div class="big lp-big">${lpIcon('lp-lg')}${nf.format(ACT.balance(ref))}<small>LP</small></div>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="group-title">Activités à l’hôtel</h3>
+          <div class="cards">
+            ${ACT.ACTIVITIES.map((a) => {
+              const missing = a.cost - ACT.balance(ref);
+              const booked = ACT.getBookings(ref).filter((b) => b.activity === a.id);
+              const book = 'reserver.html?ref=' + encodeURIComponent(ref) + '&activite=' + encodeURIComponent(a.id);
+              const status = booked.length
+                ? `<span class="mono booked">✓ Réservé · ${booked.map((b) => esc(b.label)).join(' · ')}</span>`
+                : `<span class="mono ${missing > 0 ? 'short' : 'ok'}">${missing > 0
+                    ? `Il vous manque ${nf.format(missing)} LP`
+                    : 'Disponible avec vos points'}</span>`;
+              return `
+              <div class="card activity">
+                <span class="k mono">${esc(a.cat)} <span class="price">${lpIcon('lp-sm')}${nf.format(a.cost)} LP</span></span>
+                <div>
+                  <div class="v">${esc(a.name)}</div>
+                  <p class="v-sub mono">${esc(a.detail)}</p>
+                  <p class="earn mono">+${nf.format(ACT.pointsFor(a))} pts de fidélité</p>
+                </div>
+                <div class="act-foot">
+                  ${status}
+                  <a class="btn mono" href="${esc(book)}">Réserver →</a>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+
+          <div class="cards" ${d.wallet.showInvoices ? '' : 'hidden'}>
+            <div class="card wide">
+              <span class="k mono">Factures & reçus</span>
+              <ul class="rows">
+                ${d.wallet.invoices.map((i) => `
+                  <li class="doc">
+                    <span><span class="v">${esc(i.label)}</span><span class="v-sub mono" style="display:block">${esc(i.kind)} · ${esc(i.date)}</span></span>
+                    <span class="doc-end">
+                      <span class="pts">${esc(i.amount)}</span>
+                      <a class="dl" href="${esc(i.file)}" target="_blank" rel="noopener"
+                         aria-label="Ouvrir le PDF : ${esc(i.kind)} ${esc(i.label)}" title="Ouvrir / télécharger le PDF">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+                      </a>
+                    </span>
+                  </li>`).join('')}
+              </ul>
+            </div>
+          </div>
+        </section>`;
+    }
+
+    // ---------- Ajouter de l'argent ----------
+    // Le paiement n'est pas encore branché : on choisit un montant, puis un message l'indique.
+    function setupAddMoney() {
+      const dialog = document.getElementById('money');
+      const input = document.getElementById('money-amount');
+      const confirm = document.getElementById('money-confirm');
+      const note = document.getElementById('money-note');
+      const presets = [...dialog.querySelectorAll('[data-amount]')];
+      let amount = 0;
+
+      function setAmount(value, fromPreset) {
+        amount = Math.max(0, Math.floor(Number(value) || 0));
+        presets.forEach((b) => b.setAttribute('aria-pressed', fromPreset && Number(b.dataset.amount) === amount));
+        confirm.disabled = amount < 1;
+        confirm.firstElementChild.textContent = amount
+          ? `Ajouter ${nf.format(amount)} € · ${nf.format(amount * LP_RATE)} LP`
+          : 'Continuer';
+        note.textContent = '';
+      }
+
+      presets.forEach((b) => b.addEventListener('click', () => {
+        input.value = '';
+        setAmount(b.dataset.amount, true);
+      }));
+      input.addEventListener('input', () => setAmount(input.value, false));
+
+      document.getElementById('add-money').addEventListener('click', () => {
+        input.value = '';
+        setAmount(0);
+        dialog.showModal();
+      });
+      document.getElementById('money-close').addEventListener('click', () => dialog.close());
+      dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+
+      document.getElementById('money-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (amount < 1) return;
+        note.textContent = 'Le paiement en ligne sera bientôt disponible.';
+      });
+    }
+
+    const tabs = [...document.querySelectorAll('.tab')];
+
+    function select(name, focus) {
+      const tab = tabs.find((t) => t.dataset.tab === name) || tabs[0];
+      tabs.forEach((t) => {
+        const on = t === tab;
+        t.setAttribute('aria-selected', on);
+        t.tabIndex = on ? 0 : -1;
+        const panel = document.getElementById('panel-' + t.dataset.tab);
+        if (panel) panel.hidden = !on;
+      });
+      if (focus) tab.focus();
+      history.replaceState(null, '', location.search + '#' + tab.dataset.tab);
+    }
+
+    if (!data) {
+      content.innerHTML = '<p class="missing">Aucun profil trouvé.</p>';
+      tabs.forEach((t) => (t.disabled = true));
+    } else {
+      content.innerHTML = panels(data);
+      content.addEventListener('click', (e) => {
+        const go = e.target.closest('[data-go]');
+        if (go) { e.preventDefault(); select(go.dataset.go); scrollTo({ top: 0, behavior: 'smooth' }); }
+      });
+      // bouton « Ajouter de l'argent » retiré : la fenêtre et setupAddMoney() restent disponibles
+      if (document.getElementById('add-money')) setupAddMoney();
+      tabs.forEach((t) => t.addEventListener('click', () => select(t.dataset.tab)));
+
+      // navigation au clavier entre les onglets
+      document.querySelector('.tabs').addEventListener('keydown', (e) => {
+        const i = tabs.indexOf(document.activeElement);
+        if (i < 0) return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); select(tabs[(i + 1) % tabs.length].dataset.tab, true); }
+        if (e.key === 'ArrowUp')   { e.preventDefault(); select(tabs[(i - 1 + tabs.length) % tabs.length].dataset.tab, true); }
+      });
+
+      select(location.hash.slice(1) || 'portefeuille');
+
+      // Mise à jour après chaque réservation (retour arrière, autre onglet)
+      const refresh = () => {
+        const current = (tabs.find((t) => t.getAttribute('aria-selected') === 'true') || tabs[0]).dataset.tab;
+        content.innerHTML = panels(data);
+        select(current);
+      };
+      addEventListener('pageshow', (e) => { if (e.persisted) refresh(); });
+      addEventListener('storage', (e) => { if (e.key === 'lhg-bookings-' + ref) refresh(); });
+    }
+  
+  </script>
+</body>
+</html>

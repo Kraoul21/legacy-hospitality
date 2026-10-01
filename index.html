@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legacy Hospitality Group</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ivory: #FAF7F0;
+      --cream: #F3EEE3;
+      --grey-light: #E4E1DB;
+      --grey: #A8A39B;
+      --ink: #2B2826;
+      --burgundy: #6E1F2E;
+      --burgundy-deep: #561723;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body { height: 100%; }
+
+    body {
+      background: var(--ivory);
+      color: var(--ink);
+      font-family: 'Jost', system-ui, sans-serif;
+      font-weight: 300;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    main {
+      width: 100%;
+      max-width: 960px;
+      text-align: center;
+      animation: rise 1.4s cubic-bezier(.2,.7,.2,1) both;
+    }
+
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      line-height: 1.05;
+      letter-spacing: 0.01em;
+      color: var(--ink);
+    }
+
+    h1 .legacy {
+      display: block;
+      font-size: clamp(4.2rem, 16vw, 10.5rem);
+    }
+
+    h1 .group {
+      display: block;
+      margin-top: 22px;
+      font-family: 'Jost', sans-serif;
+      font-weight: 400;
+      font-size: clamp(0.85rem, 2.6vw, 1.15rem);
+      letter-spacing: 0.48em;
+      text-transform: uppercase;
+      color: var(--burgundy);
+      padding-left: 0.48em; /* compense le letter-spacing final */
+    }
+
+    .divider {
+      width: 44px;
+      height: 1px;
+      background: var(--burgundy);
+      opacity: .55;
+      margin: 56px auto 48px;
+    }
+
+    form {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 460px;
+      margin: 0 auto;
+      padding: 7px 7px 7px 28px;
+      background: #FFFDF8;
+      border: 1px solid var(--grey-light);
+      border-radius: 999px;
+      box-shadow: 0 1px 2px rgba(43,40,38,.03), 0 12px 32px -16px rgba(43,40,38,.12);
+      transition: border-color .4s ease, box-shadow .4s ease;
+    }
+
+    form:focus-within {
+      border-color: rgba(110,31,46,.35);
+      box-shadow: 0 1px 2px rgba(43,40,38,.03), 0 16px 40px -18px rgba(110,31,46,.25);
+    }
+
+    form.error { animation: shake .45s ease; border-color: rgba(110,31,46,.55); }
+
+    label.sr {
+      position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 400;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink);
+      padding: 12px 0;
+    }
+
+    input::placeholder {
+      color: var(--grey);
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      text-transform: none;
+    }
+
+    button {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      border: none;
+      border-radius: 50%;
+      background: var(--burgundy);
+      color: var(--ivory);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: background .3s ease, transform .3s ease;
+    }
+
+    button:hover { background: var(--burgundy-deep); transform: translateX(2px); }
+    button:focus-visible { outline: 2px solid var(--burgundy); outline-offset: 3px; }
+
+    button svg { width: 18px; height: 18px; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    @keyframes shake {
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    .message {
+      min-height: 1.4em;
+      margin-top: 18px;
+      font-size: 0.82rem;
+      letter-spacing: 0.06em;
+      color: var(--burgundy);
+      opacity: 0;
+      transition: opacity .4s ease;
+    }
+
+    .message.visible { opacity: 1; }
+
+    /* ---------- Transition vers la page de l'hôtel ---------- */
+    .curtain {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      background: #FAF7F0; /* fond ivoire de la page de l'hôtel */
+      border-radius: 32px 32px 0 0;
+      box-shadow: 0 -24px 60px rgba(60, 45, 30, 0.16);
+      transform: translateY(100%);
+      pointer-events: none;
+    }
+
+    .leaving main {
+      animation: leave .7s cubic-bezier(.5,0,.2,1) forwards;
+    }
+
+    .leaving form { border-color: rgba(110,31,46,.35); }
+
+    .leaving .curtain {
+      animation: curtain-up 1s .35s cubic-bezier(.7,0,.2,1) forwards;
+    }
+
+    @keyframes leave {
+      from { opacity: 1; transform: none; filter: blur(0); }
+      to   { opacity: 0; transform: translateY(-28px); filter: blur(6px); }
+    }
+
+    @keyframes curtain-up {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      main, form.error { animation: none; }
+      .leaving main { animation: none; opacity: 0; transition: opacity .3s ease; }
+      .leaving .curtain { animation: none; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>
+      <span class="legacy">Legacy</span>
+      <span class="group">Hospitality Group</span>
+    </h1>
+
+    <div class="divider" aria-hidden="true"></div>
+
+    <form id="booking" novalidate>
+      <label class="sr" for="ref">Numéro de réservation</label>
+      <input id="ref" name="ref" type="text" autocomplete="off" spellcheck="false"
+             placeholder="Numéro de réservation" maxlength="24">
+      <button type="submit" aria-label="Accéder à ma réservation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14M13 6l6 6-6 6"/>
+        </svg>
+      </button>
+    </form>
+    <p class="message" id="message" role="alert" aria-live="polite"></p>
+  </main>
+
+  <div class="curtain" aria-hidden="true"></div>
+
+  <script>
+    // Numéros de réservation → page de l'hôtel associé
+    const RESERVATIONS = {
+      '012345': 'shelter-co.html',
+    };
+
+    const form = document.getElementById('booking');
+    const input = document.getElementById('ref');
+    const message = document.getElementById('message');
+
+    function fail(text) {
+      message.textContent = text;
+      message.classList.add('visible');
+      form.classList.remove('error');
+      void form.offsetWidth;
+      form.classList.add('error');
+      input.focus();
+    }
+
+    input.addEventListener('input', () => message.classList.remove('visible'));
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const ref = input.value.trim().toUpperCase();
+      if (!ref) return fail('Veuillez saisir votre numéro de réservation.');
+      const page = RESERVATIONS[ref];
+      if (!page) return fail('Numéro de réservation introuvable.');
+
+      // Le contenu s'efface, un rideau gris monte, puis la page de l'hôtel prend le relais
+      input.blur();
+      try { sessionStorage.setItem('lhg-transition', '1'); } catch (err) {}
+      document.body.classList.add('leaving');
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      setTimeout(() => {
+        window.location.href = page + '?ref=' + encodeURIComponent(ref);
+      }, reduce ? 300 : 1400);
+    });
+
+    // Retour arrière (cache du navigateur) : on retire le rideau
+    addEventListener('pageshow', (e) => {
+      if (e.persisted) document.body.classList.remove('leaving');
+    });
+  </script>
+</body>
+</html>

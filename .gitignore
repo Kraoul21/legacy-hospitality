@@ -1,0 +1,8 @@
+# environnement local
+.venv/
+__pycache__/
+.DS_Store
+.claude/
+
+# demandes clients enregistrées par serveur.py (données privées)
+.demandes/

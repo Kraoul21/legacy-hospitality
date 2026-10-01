@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legacy Hospitality Group — Motion design</title>
+  <!-- Motion design de présentation (48 s, 1920 × 1080) — charte Legacy Hospitality Group.
+       Espace : lecture / pause · ← → : ±5 s · F : plein écran · R : recommencer
+       Version précédente : archives/motion-design-v1.html -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=block" rel="stylesheet">
+  <style>
+    :root {
+      --ivory: #FAF7F0;
+      --paper: #FFFDF8;
+      --cream: #F3EEE3;
+      --grey-light: #E4E1DB;
+      --grey: #A8A39B;
+      --muted: #7A746C;
+      --ink: #2B2826;
+      --burgundy: #6E1F2E;
+      --burgundy-deep: #561723;
+      --line: rgba(110, 31, 46, .28);
+      --ease: cubic-bezier(.2, .7, .2, 1);
+      --ease-io: cubic-bezier(.7, 0, .2, 1);
+      --spring: cubic-bezier(.3, 1.45, .5, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      background: #1C1A19;
+      font-family: 'Jost', system-ui, sans-serif;
+      font-weight: 300;
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+    body.idle { cursor: none; }
+
+    /* ---------- scène 1920 × 1080 mise à l'échelle ---------- */
+    .stage {
+      position: absolute; left: 50%; top: 50%;
+      width: 1920px; height: 1080px;
+      transform: translate(-50%, -50%) scale(var(--s, .5));
+      background: var(--ivory);
+      overflow: hidden;
+    }
+    .paused * { animation-play-state: paused !important; }
+
+    .ambient { position: absolute; inset: 0; pointer-events: none; }
+    .ambient i { position: absolute; border-radius: 50%; filter: blur(40px); animation: drift 22s ease-in-out infinite alternate; }
+    .ambient i:nth-child(1) { width: 900px; height: 900px; left: -300px; top: -380px; background: radial-gradient(closest-side, rgba(110, 31, 46, .10), transparent); }
+    .ambient i:nth-child(2) { width: 1100px; height: 1100px; right: -420px; bottom: -520px; background: radial-gradient(closest-side, rgba(168, 163, 155, .28), transparent); animation-duration: 28s; }
+    @keyframes drift { to { transform: translate(120px, 80px) scale(1.08); } }
+
+    .grain {
+      position: absolute; inset: 0; pointer-events: none; opacity: .35; mix-blend-mode: multiply;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.17 0 0 0 0 0.16 0 0 0 0 0.15 0 0 0 .08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* cadre */
+    .frame { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+    .corner { position: absolute; width: 34px; height: 34px; border: 0 solid rgba(110, 31, 46, .35); }
+    .corner.tl { left: 56px; top: 56px; border-left-width: 1px; border-top-width: 1px; }
+    .corner.tr { right: 56px; top: 56px; border-right-width: 1px; border-top-width: 1px; }
+    .corner.bl { left: 56px; bottom: 56px; border-left-width: 1px; border-bottom-width: 1px; }
+    .corner.br { right: 56px; bottom: 56px; border-right-width: 1px; border-bottom-width: 1px; }
+    .sig, .chap { position: absolute; top: 64px; font-weight: 400; font-size: 17px; letter-spacing: .42em; text-transform: uppercase; color: var(--burgundy); }
+    .sig { left: 112px; }
+    .chap { right: 112px; display: flex; gap: 14px; align-items: center; opacity: 0; transition: opacity .6s ease; }
+    .chap.show { opacity: 1; }
+    .chap i { width: 44px; height: 2px; background: var(--grey-light); border-radius: 2px; overflow: hidden; position: relative; }
+    .chap i b { position: absolute; inset: 0; background: var(--burgundy); transform-origin: left; transform: scaleX(0); }
+
+    /* ---------- scènes & révélations ---------- */
+    .scene { position: absolute; inset: 0; visibility: hidden; }
+    .scene.on { visibility: visible; }
+
+    .rv, .fade, .pop, .flip, .draw, .mask > span { opacity: 0; }
+    .on .rv   { animation: rv 1.1s var(--ease) var(--d, 0s) both; }
+    .on .fade { animation: fade 1s ease var(--d, 0s) both; }
+    .on .pop  { animation: pop .9s var(--spring) var(--d, 0s) both; }
+    .on .draw { animation: draw 1.2s var(--ease-io) var(--d, 0s) both; }
+    /* retournement 3D (pièces, pastilles) */
+    .on .flip { animation: flip 1.4s var(--ease) var(--d, 0s) both, sway 6s ease-in-out calc(var(--d, 0s) + 1.4s) infinite; }
+    @keyframes flip { from { opacity: 0; transform: perspective(900px) rotateY(-200deg) scale(.5); } to { opacity: 1; transform: perspective(900px) rotateY(0) scale(1); } }
+    @keyframes sway { 0%, 100% { transform: perspective(900px) rotateY(0); } 50% { transform: perspective(900px) rotateY(22deg) rotateX(-6deg); } }
+
+    /* masque de texte : marge basse généreuse pour ne pas couper les jambages (g, y, p) */
+    .mask { display: inline-block; overflow: hidden; vertical-align: bottom; padding: .06em .02em .32em; margin-bottom: -.32em; perspective: 700px; }
+    .mask > span { display: inline-block; transform-origin: 50% 100%; }
+    .on .mask > span { animation: up 1.3s var(--ease) var(--d, 0s) both; }
+
+    @keyframes rv   { from { opacity: 0; transform: translateY(40px); filter: blur(10px); } to { opacity: 1; transform: none; filter: none; } }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pop  { from { opacity: 0; transform: scale(.5); } to { opacity: 1; transform: none; } }
+    @keyframes draw { from { opacity: 1; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
+    @keyframes up   { from { opacity: 1; transform: translateY(120%) rotateX(-75deg); } to { opacity: 1; transform: none; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .i { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .p3d { transform-style: preserve-3d; }
+
+    /* ---------- logo ---------- */
+    .logo-legacy { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 250px; line-height: 1; }
+    .logo-legacy .mask > span { --d: calc(var(--d0, .7s) + var(--i) * .07s); }
+    .logo-group { margin-top: 36px; font-size: 30px; letter-spacing: .5em; padding-left: .5em; text-transform: uppercase; font-weight: 400; color: var(--burgundy); }
+    .on .logo-group { animation: track 1.8s var(--ease) var(--d) both; }
+    @keyframes track { from { opacity: 0; letter-spacing: 1.1em; filter: blur(6px); } to { opacity: 1; letter-spacing: .5em; filter: none; } }
+    .rule { width: 80px; height: 1px; background: var(--burgundy); margin: 56px auto 0; }
+    .vline { position: absolute; left: 50%; top: 0; width: 1px; height: 180px; background: var(--burgundy); opacity: .5; transform-origin: top; transform: scaleY(0); }
+    .on .vline { animation: vline 1.2s var(--ease-io) .1s both; }
+    @keyframes vline { to { transform: scaleY(1); } }
+    .since { margin-top: 30px; font-size: 20px; letter-spacing: .4em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
+
+    /* ---------- 1 · Trois technologies ---------- */
+    .trio { position: relative; display: flex; gap: 190px; margin-bottom: 90px; }
+    .trio .link { position: absolute; left: 90px; right: 90px; top: 90px; height: 1px; background: var(--line); transform-origin: left; }
+    .disc {
+      position: relative; width: 180px; height: 180px; border-radius: 50%;
+      display: grid; place-items: center; color: var(--burgundy);
+      background: var(--paper); border: 1px solid var(--line);
+      box-shadow: 0 40px 70px -40px rgba(110, 31, 46, .5);
+    }
+    .disc svg { width: 70px; height: 70px; }
+    .disc .n { position: absolute; top: -16px; right: -6px; width: 46px; height: 46px; border-radius: 50%; background: var(--burgundy); color: var(--ivory); display: grid; place-items: center; font-family: 'Cormorant Garamond', serif; font-size: 22px; }
+    .big-line { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 120px; line-height: 1; }
+
+    /* ---------- 2-4 · colonne titre ---------- */
+    .title-col { position: absolute; left: 140px; top: 330px; width: 580px; }
+    .ghost {
+      position: absolute; left: 100px; top: 150px;
+      font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 560px; line-height: 1;
+      color: transparent; -webkit-text-stroke: 1.5px rgba(110, 31, 46, .1); pointer-events: none;
+    }
+    .on .ghost { animation: ghost 11s linear both; }
+    @keyframes ghost { from { opacity: 0; transform: translateY(40px); } 12% { opacity: 1; } to { opacity: 1; transform: translateY(-30px); } }
+    .kicker { display: flex; align-items: center; gap: 16px; font-size: 18px; letter-spacing: .42em; text-transform: uppercase; color: var(--burgundy); font-weight: 400; }
+    .kicker b { width: 54px; height: 54px; border-radius: 50%; background: var(--burgundy); color: var(--ivory); display: grid; place-items: center; font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400; letter-spacing: 0; }
+    .title-col h2 { margin-top: 30px; font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 96px; line-height: 1; white-space: nowrap; }
+    .title-col .sep { width: 70px; height: 1px; background: var(--burgundy); margin: 34px 0 30px; transform-origin: left; }
+    .title-col p { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 300; font-size: 44px; line-height: 1.2; color: #4A4541; }
+
+    /* zone visuelle 3D : 1020 × 780 */
+    .viz { position: absolute; left: 760px; top: 150px; width: 1020px; height: 780px; perspective: 1500px; perspective-origin: 50% 40%; }
+
+    /* ---------- Bienvenue : plan d'orbite incliné en 3D ---------- */
+    .plane {
+      position: absolute; left: 0; top: 0; width: 1020px; height: 780px;
+      transform-origin: 510px 430px;
+      transform: rotateX(62deg);
+    }
+    .on .plane { animation: tilt 1.8s var(--ease) .3s both; }
+    @keyframes tilt { from { transform: rotateX(0deg) scale(.4); } to { transform: rotateX(62deg); } }
+
+    .ring { position: absolute; left: 510px; top: 430px; width: 300px; height: 300px; margin: -150px 0 0 -150px; border-radius: 50%; border: 2px solid var(--line); opacity: 0; }
+    .on .ring { animation: ring 3.6s ease-out infinite; }
+    .on .ring:nth-child(1) { animation-delay: .8s; }
+    .on .ring:nth-child(2) { animation-delay: 2s; }
+    .on .ring:nth-child(3) { animation-delay: 3.2s; }
+    @keyframes ring { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(2.8); } }
+
+    .orbit-path { position: absolute; left: 510px; top: 430px; width: 780px; height: 780px; margin: -390px 0 0 -390px; border-radius: 50%; border: 1.5px dashed rgba(110, 31, 46, .3); }
+    .on .orbit-path { animation: spin 60s linear infinite; }
+    .floor { position: absolute; left: 510px; top: 430px; width: 900px; height: 900px; margin: -450px 0 0 -450px; border-radius: 50%; background: radial-gradient(closest-side, rgba(110, 31, 46, .09), transparent); }
+
+    .sweep {
+      position: absolute; left: 510px; top: 430px; width: 860px; height: 860px; margin: -430px 0 0 -430px; border-radius: 50%;
+      background: conic-gradient(from 0deg, rgba(110, 31, 46, .26), rgba(110, 31, 46, 0) 22%, transparent);
+      opacity: 0;
+    }
+    .on .sweep { animation: sweepvis 2.8s ease 4.6s both, spin 1.3s linear 4.6s infinite; }
+    @keyframes sweepvis { 0% { opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+
+    .orbit { position: absolute; left: 0; top: 0; width: 1020px; height: 780px; transform-origin: 510px 430px; }
+    .on .orbit { animation: spin 40s linear infinite; }
+    .slot { position: absolute; width: 0; height: 0; }
+    .fly { transform: scale(0); }
+    .on .fly { animation: fly 1.3s var(--ease) var(--d) both; }
+    @keyframes fly { from { transform: translate(var(--fx), var(--fy)) scale(0); } to { transform: none; } }
+    /* chaque préférence reste face à la caméra (billboard) */
+    .badge { position: absolute; left: -58px; top: -116px; width: 116px; height: 116px; transform-origin: 50% 100%; transform: rotateX(-62deg); }
+    .on .badge { animation: billboard 40s linear infinite; }
+    @keyframes billboard { from { transform: rotateZ(0deg) rotateX(-62deg); } to { transform: rotateZ(-360deg) rotateX(-62deg); } }
+    .badge .face {
+      width: 116px; height: 116px; border-radius: 50%; background: var(--paper); border: 1px solid var(--grey-light);
+      display: grid; place-items: center; color: var(--ink);
+      box-shadow: 0 30px 50px -30px rgba(43, 40, 38, .45);
+    }
+    .badge .face svg { width: 46px; height: 46px; }
+    .on .badge .face { animation: litface .5s ease var(--p) both; }
+    @keyframes litface { to { border-color: var(--burgundy); color: var(--burgundy); } }
+    .badge .ok {
+      position: absolute; right: -4px; top: -4px; width: 40px; height: 40px; border-radius: 50%;
+      background: var(--burgundy); color: var(--ivory); display: grid; place-items: center; opacity: 0;
+      box-shadow: 0 8px 16px -6px rgba(110, 31, 46, .6);
+    }
+    .badge .ok svg { width: 22px; height: 22px; stroke-width: 2.2; }
+    .on .badge .ok { animation: pop .7s var(--spring) var(--p) both; }
+    .shadow { position: absolute; left: -40px; top: -14px; width: 80px; height: 28px; border-radius: 50%; background: radial-gradient(closest-side, rgba(43, 40, 38, .22), transparent); }
+
+    .core { position: absolute; left: 510px; top: 330px; width: 240px; height: 240px; margin: -120px 0 0 -120px; }
+    .core .body {
+      position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, var(--paper) 55%, var(--cream));
+      border: 1px solid var(--line); display: grid; place-items: center; color: var(--burgundy);
+      box-shadow: 0 60px 90px -50px rgba(110, 31, 46, .7), inset -12px -16px 30px rgba(110, 31, 46, .08);
+    }
+    .on .core .body { animation: flip 1.4s var(--ease) .6s both, hover 4s ease-in-out 2s infinite; }
+    @keyframes hover { 50% { transform: translateY(-16px); } }
+    .core .body > * { grid-area: 1 / 1; }
+    .core svg { width: 92px; height: 92px; }
+    .core .done {
+      width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #9A3E50, var(--burgundy) 60%, #43101B); color: var(--ivory);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+      opacity: 0; transform: perspective(700px) rotateY(-180deg);
+    }
+    .core .done svg { width: 84px; height: 84px; stroke-width: 1.8; }
+    .core .done span { font-size: 16px; letter-spacing: .34em; text-transform: uppercase; font-weight: 400; padding-left: .34em; }
+    .on .core .done { animation: turn .9s var(--ease) 8s both; }
+    @keyframes turn { from { opacity: 0; transform: perspective(700px) rotateY(-180deg); } 50% { opacity: 1; } to { opacity: 1; transform: perspective(700px) rotateY(0); } }
+    .on .core .key { animation: out .45s ease 7.9s both; }
+    @keyframes out { to { opacity: 0; transform: perspective(700px) rotateY(90deg); } }
+
+    /* ---------- Conciergerie : réseau qui pivote en 3D ---------- */
+    .netplane { position: absolute; left: 0; top: 0; width: 1020px; height: 780px; transform-origin: 510px 420px; }
+    .on .netplane { animation: netin 1.6s var(--ease) .2s both, netsway 9s ease-in-out 1.8s infinite alternate; }
+    @keyframes netin { from { transform: rotateX(75deg) rotateZ(-30deg) scale(.3); } to { transform: rotateX(22deg) rotateY(-14deg); } }
+    @keyframes netsway { from { transform: rotateX(22deg) rotateY(-14deg); } to { transform: rotateX(14deg) rotateY(12deg); } }
+
+    .net { position: absolute; left: 0; top: 0; width: 1020px; height: 780px; overflow: visible; }
+    .net line { stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke .4s ease, stroke-width .4s ease; }
+    .on .net line { animation: dash 1.1s var(--ease-io) var(--d) forwards; }
+    @keyframes dash { to { stroke-dashoffset: 0; } }
+    .net line.lit { stroke: var(--burgundy); stroke-width: 3; }
+    .net ellipse { fill: none; stroke: rgba(110, 31, 46, .14); stroke-dasharray: 4 8; }
+
+    .hub {
+      position: absolute; left: 510px; top: 420px; width: 220px; height: 220px; margin: -110px 0 0 -110px;
+      border-radius: 50%; background: radial-gradient(circle at 35% 30%, #9A3E50, var(--burgundy) 60%, #43101B); color: var(--ivory);
+      display: grid; place-items: center;
+      box-shadow: 0 50px 90px -40px rgba(110, 31, 46, .75);
+    }
+    .hub > * { grid-area: 1 / 1; transition: opacity .3s ease, transform .3s ease; }
+    .hub svg { width: 84px; height: 84px; }
+    .hub .think { display: flex; gap: 12px; opacity: 0; transform: scale(.6); }
+    .hub .think i { width: 14px; height: 14px; border-radius: 50%; background: var(--ivory); animation: bounce 1s ease-in-out infinite; }
+    .hub .think i:nth-child(2) { animation-delay: .15s; }
+    .hub .think i:nth-child(3) { animation-delay: .3s; }
+    @keyframes bounce { 50% { transform: translateY(-10px); opacity: .5; } }
+    .hub.thinking .think { opacity: 1; transform: none; }
+    .hub.thinking svg { opacity: 0; transform: scale(.6); }
+    .wave { position: absolute; left: 510px; top: 420px; width: 220px; height: 220px; margin: -110px 0 0 -110px; border-radius: 50%; border: 2px solid rgba(110, 31, 46, .5); opacity: 0; }
+    .on .wave { animation: ring 2.4s ease-out 1s infinite; }
+    .on .wave + .wave { animation-delay: 2.2s; }
+
+    .node { position: absolute; width: 0; height: 0; }
+    .node .dot {
+      position: absolute; left: -54px; top: -54px; width: 108px; height: 108px; border-radius: 50%;
+      background: var(--paper); border: 1px solid var(--grey-light); color: var(--ink);
+      display: grid; place-items: center; box-shadow: 0 26px 46px -28px rgba(43, 40, 38, .45);
+      transition: background .45s ease, color .45s ease, border-color .45s ease;
+    }
+    .node .dot svg { width: 44px; height: 44px; }
+    .node .lift { position: absolute; left: 0; top: 0; transition: transform .6s var(--spring); }
+    .node.lit .lift { transform: translateZ(60px) scale(1.12); }
+    .node.lit .dot { background: var(--burgundy); color: var(--ivory); border-color: var(--burgundy); }
+    .node .chip {
+      position: absolute; top: 72px; left: 0; transform: translate(-50%, 10px) scale(.8); opacity: 0;
+      white-space: nowrap; padding: 10px 18px; border-radius: 999px; background: var(--ink); color: var(--ivory);
+      font-size: 16px; letter-spacing: .2em; text-transform: uppercase; font-weight: 400;
+      transition: opacity .4s ease, transform .5s var(--spring);
+    }
+    .node .chip.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+
+    .pt { position: absolute; left: 510px; top: 420px; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--burgundy); opacity: 0; }
+    .on .pt { animation: travel 2.2s var(--ease-io) var(--d) infinite; }
+    @keyframes travel { 0% { opacity: 0; transform: translate(0, 0) scale(.5); } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--x), var(--y)) scale(1); } }
+
+    .ask {
+      position: absolute; left: 510px; top: 40px; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 14px; white-space: nowrap;
+      padding: 20px 30px; border-radius: 30px 30px 8px 30px;
+      background: var(--paper); border: 1px solid var(--grey-light);
+      box-shadow: 0 30px 60px -36px rgba(43, 40, 38, .5);
+      font-size: 30px; font-weight: 300; opacity: 0;
+      transition: opacity .35s ease;
+    }
+    .ask.show { opacity: 1; }
+    .caret { display: inline-block; width: 2px; height: 1em; background: var(--burgundy); animation: blink 1s steps(1) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .live { position: absolute; left: 510px; top: 752px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; font-size: 16px; letter-spacing: .34em; text-transform: uppercase; color: var(--burgundy); font-weight: 400; white-space: nowrap; }
+    .live i { width: 10px; height: 10px; border-radius: 50%; background: #3F8F5A; animation: live 1.8s ease-out infinite; }
+    @keyframes live { 0% { box-shadow: 0 0 0 0 rgba(63, 143, 90, .5); } 100% { box-shadow: 0 0 0 14px rgba(63, 143, 90, 0); } }
+
+    /* ---------- Legacy Points : carrousel 3D de blocs autour de la pièce ---------- */
+    .world { position: absolute; left: 510px; top: 285px; width: 0; height: 0; transform: rotateX(-8deg); }
+    .carousel { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .on .carousel { animation: carousel 16s linear infinite; }
+    @keyframes carousel { from { transform: rotateY(0deg); } to { transform: rotateY(-360deg); } }
+    .slot3d { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .blk {
+      position: absolute; left: -62px; top: -52px; width: 124px; height: 104px; border-radius: 20px;
+      background: var(--paper); border: 1px solid var(--grey-light);
+      display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px;
+      box-shadow: 0 22px 40px -28px rgba(43, 40, 38, .45);
+      opacity: 0;
+    }
+    .on .blk { animation: fade .8s ease var(--d) both; }
+    .blk b { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 25px; white-space: nowrap; }
+    .blk i { width: 52px; height: 5px; border-radius: 5px; background: var(--grey-light); }
+    .blk i + i { width: 34px; }
+    .blk.hot { background: var(--burgundy); border-color: var(--burgundy); }
+    .blk.hot b { color: var(--ivory); }
+    .blk.hot i { background: rgba(250, 247, 240, .35); }
+    .ring3d { position: absolute; left: -400px; top: -400px; width: 800px; height: 800px; border-radius: 50%; border: 1.5px solid var(--line); transform: rotateX(90deg); }
+
+    .coin3d { position: absolute; left: -140px; top: -140px; width: 280px; height: 280px; }
+    .on .coin3d { animation: coin 2.2s var(--ease) 1.2s both, coinspin 7s ease-in-out 3.4s infinite; }
+    @keyframes coin { from { transform: rotateY(-720deg) scale(0); } to { transform: rotateY(0) scale(1); } }
+    @keyframes coinspin { 0%, 55% { transform: rotateY(0); } 80%, 100% { transform: rotateY(360deg); } }
+    .coin3d .face { position: absolute; inset: 0; backface-visibility: hidden; }
+    .coin3d .face.back { transform: rotateY(180deg); }
+    .coin3d svg { width: 280px; height: 280px; filter: drop-shadow(0 40px 50px rgba(110, 31, 46, .4)); }
+    .coin3d { transform: scale(0); }
+
+    .spark { position: absolute; left: 510px; top: 285px; width: 10px; height: 10px; margin: -5px; border-radius: 50%; background: var(--burgundy); opacity: 0; }
+    .on .spark { animation: sparkin 1.1s var(--ease-io) var(--d) both; }
+    @keyframes sparkin { 0% { opacity: 0; transform: translate(var(--x), var(--y)) scale(.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(0, 0) scale(1.4); } }
+
+    .amount { position: absolute; left: 510px; top: 540px; transform: translateX(-50%); display: flex; align-items: baseline; gap: 16px; white-space: nowrap; }
+    .amount b { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 110px; line-height: 1; }
+    .amount span { font-size: 28px; letter-spacing: .3em; color: var(--burgundy); font-weight: 400; }
+    .lock { position: absolute; left: 510px; top: 505px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; white-space: nowrap; font-size: 15px; letter-spacing: .3em; text-transform: uppercase; color: var(--burgundy); font-weight: 400; }
+    .lock svg { width: 18px; height: 18px; }
+
+    .perk { position: absolute; top: 712px; width: 0; height: 0; }
+    .perk .pf { opacity: 0; }
+    .on .perk .pf { animation: perkfly 1.2s var(--ease) var(--d) both; }
+    @keyframes perkfly { from { opacity: 0; transform: translate(var(--fx), -412px) scale(.3) rotateY(-180deg); } to { opacity: 1; transform: none; } }
+    .perk .dot {
+      position: absolute; left: -44px; top: -44px; width: 88px; height: 88px; border-radius: 50%;
+      background: var(--paper); border: 1px solid var(--line); color: var(--burgundy); display: grid; place-items: center;
+      box-shadow: 0 24px 40px -26px rgba(110, 31, 46, .55);
+    }
+    .perk .dot svg { width: 36px; height: 36px; }
+    .perk.dark .dot { background: var(--burgundy); color: var(--ivory); border-color: var(--burgundy); }
+    .perk span.l { position: absolute; left: 0; top: 56px; transform: translateX(-50%); white-space: nowrap; font-size: 15px; letter-spacing: .3em; text-transform: uppercase; font-weight: 400; }
+
+    /* ---------- Outro ---------- */
+    .icons { display: flex; gap: 60px; margin-bottom: 70px; }
+    .icons .disc { width: 110px; height: 110px; }
+    .icons .disc svg { width: 44px; height: 44px; }
+    .outro .logo-legacy { font-size: 200px; --d0: 1.1s; }
+    .outro .logo-group { font-size: 26px; margin-top: 28px; }
+    .tagline { margin-top: 60px; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 300; font-size: 48px; }
+
+    /* ---------- rideau ---------- */
+    .curtain {
+      position: absolute; left: 0; right: 0; top: 0; height: 132%;
+      background: var(--burgundy); border-radius: 60px; z-index: 20;
+      transform: translateY(110%); display: grid; place-items: center;
+    }
+    .curtain span { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 64px; letter-spacing: .3em; color: rgba(250, 247, 240, .85); padding-left: .3em; }
+
+    /* ---------- lecteur ---------- */
+    .controls {
+      position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+      width: min(760px, calc(100vw - 32px));
+      display: flex; align-items: center; gap: 14px;
+      padding: 10px 16px 10px 10px; border-radius: 999px;
+      background: rgba(28, 26, 25, .72); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      color: var(--ivory); font-size: 13px; letter-spacing: .08em;
+      transition: opacity .5s ease, transform .5s var(--ease); z-index: 50;
+    }
+    .idle .controls { opacity: 0; transform: translate(-50%, 16px); pointer-events: none; }
+    .controls button { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; background: rgba(250, 247, 240, .12); color: var(--ivory); display: grid; place-items: center; }
+    .controls button:hover { background: rgba(250, 247, 240, .22); }
+    .controls button.main { background: var(--burgundy); }
+    .controls svg { width: 16px; height: 16px; fill: currentColor; }
+    .track { position: relative; flex: 1; height: 26px; cursor: pointer; display: flex; align-items: center; }
+    .track .rail { position: absolute; left: 0; right: 0; height: 3px; border-radius: 3px; background: rgba(250, 247, 240, .2); }
+    .track .fill { position: absolute; left: 0; height: 3px; border-radius: 3px; background: var(--ivory); }
+    .track .mark { position: absolute; top: 5px; width: 1px; height: 16px; background: rgba(250, 247, 240, .35); }
+    .time { font-variant-numeric: tabular-nums; min-width: 88px; text-align: right; opacity: .8; }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15.5" r="4.5"/><path d="M11.3 12.2L20 3.5M16.5 7l2.8 2.8M14.3 9.2l2 2"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5.5h16v10.5H10l-6 4.5z"/><path d="M8.5 10.8h7"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10.2 7.5v9h5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-pillow" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="5"/><path d="M7.5 10.5c3 1.6 6 1.6 9 0"/></symbol>
+    <symbol id="i-glass" viewBox="0 0 24 24"><path d="M9 3h6l-.4 6a2.6 2.6 0 0 1-5.2 0z"/><path d="M12 11.6V20M9 20h6M17 4.5l1.6-1.6M18 7.2h2.2"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19l8-8"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M19 14.5A7.5 7.5 0 1 1 9.5 5a6 6 0 0 0 9.5 9.5z"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 19.5s-7.5-4.6-7.5-10A4 4 0 0 1 12 7.2a4 4 0 0 1 7.5 2.3c0 5.4-7.5 10-7.5 10z"/></symbol>
+    <symbol id="i-thermo" viewBox="0 0 24 24"><path d="M10 14V5a2 2 0 0 1 4 0v9a3.6 3.6 0 1 1-4 0z"/><path d="M12 10v6"/></symbol>
+    <symbol id="i-spa" viewBox="0 0 24 24"><path d="M12 4c3 3.6 5 6.6 5 9.2a5 5 0 0 1-10 0C7 10.6 9 7.6 12 4z"/><path d="M9.5 14a2.6 2.6 0 0 0 2.5 2.4"/></symbol>
+    <symbol id="i-fork" viewBox="0 0 24 24"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 21V3c-2 1-3 3.5-3 7h3"/></symbol>
+    <symbol id="i-car" viewBox="0 0 24 24"><path d="M4 15.5v-3.5l2-5h12l2 5v3.5z"/><circle cx="7.5" cy="16.5" r="1.8"/><circle cx="16.5" cy="16.5" r="1.8"/><path d="M4 12h16"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M3.5 17.5h17M5.5 17.5a6.5 6.5 0 0 1 13 0M12 9V7M10.5 7h3"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6-5.5-6-10.5a6 6 0 0 1 12 0C18 15.5 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></symbol>
+    <symbol id="i-pct" viewBox="0 0 24 24"><path d="M6 18L18 6"/><circle cx="7.5" cy="7.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.5 5.3 5.8.7-4.3 4 1.1 5.7L12 16.4l-5.1 2.8L8 13.5l-4.3-4 5.8-.7z"/></symbol>
+    <symbol id="i-gem" viewBox="0 0 24 24"><path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18M9.5 4L8 9l4 11 4-11-1.5-5"/></symbol>
+    <symbol id="coin-face" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="47" fill="url(#cg)" stroke="url(#cr)" stroke-width="3"/>
+      <circle cx="50" cy="50" r="36" fill="none" stroke="rgba(250,247,240,.55)" stroke-width="1.2" stroke-dasharray="2.4 3"/>
+      <path d="M42 30v40h20" fill="none" stroke="#FAF7F0" stroke-width="7" stroke-linecap="square"/>
+    </symbol>
+    <defs>
+      <radialGradient id="cg" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#9A3E50"/><stop offset=".55" stop-color="#6E1F2E"/><stop offset="1" stop-color="#43101B"/></radialGradient>
+      <linearGradient id="cr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F3E3D6"/><stop offset=".5" stop-color="#C9A99A"/><stop offset="1" stop-color="#F3E3D6"/></linearGradient>
+    </defs>
+  </svg>
+
+  <div class="stage" id="stage">
+    <div class="ambient"><i></i><i></i></div>
+
+    <!-- 0 · Ouverture -->
+    <section class="scene" data-start="0" data-name="Ouverture">
+      <div class="vline"></div>
+      <div class="center">
+        <div class="logo-legacy" id="legacy1"></div>
+        <div class="logo-group" style="--d:1.7s">Hospitality Group</div>
+        <div class="rule draw" style="--d:2.6s"></div>
+        <div class="since fade" style="--d:3s">Depuis 1967</div>
+      </div>
+    </section>
+
+    <!-- 1 · Trois technologies -->
+    <section class="scene" data-start="6.5" data-name="Trois technologies">
+      <div class="center">
+        <div class="trio">
+          <span class="link draw" style="--d:1.1s"></span>
+          <div class="disc flip" style="--d:.3s"><svg class="i"><use href="#i-key"/></svg><span class="n">1</span></div>
+          <div class="disc flip" style="--d:.55s"><svg class="i"><use href="#i-chat"/></svg><span class="n">2</span></div>
+          <div class="disc flip" style="--d:.8s"><svg class="i"><use href="#i-coin"/></svg><span class="n">3</span></div>
+        </div>
+        <div class="big-line"><span class="mask"><span style="--d:1.3s">Trois technologies.</span></span></div>
+      </div>
+    </section>
+
+    <!-- 2 · Bienvenue -->
+    <section class="scene" data-start="10" data-name="Bienvenue" data-chap="0">
+      <div class="ghost">01</div>
+      <div class="title-col">
+        <div class="kicker rv" style="--d:.2s"><b>1</b>Bienvenue</div>
+        <h2><span class="mask"><span style="--d:.4s">Bienvenue</span></span></h2>
+        <div class="sep draw" style="--d:1s"></div>
+        <p class="rv" style="--d:1.3s">Chaque préférence, anticipée.</p>
+      </div>
+
+      <div class="viz">
+        <div class="plane p3d">
+          <div class="floor"></div>
+          <div><span class="ring"></span><span class="ring"></span><span class="ring"></span></div>
+          <div class="orbit-path"></div>
+          <div class="sweep"></div>
+          <div class="orbit p3d" id="orbit"></div>
+        </div>
+        <div class="core">
+          <div class="body">
+            <svg class="i key"><use href="#i-key"/></svg>
+            <div class="done"><svg class="i"><use href="#i-check"/></svg><span>Prête</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · Conciergerie -->
+    <section class="scene" data-start="20.5" data-name="Conciergerie" data-chap="1">
+      <div class="ghost">02</div>
+      <div class="title-col">
+        <div class="kicker rv" style="--d:.2s"><b>2</b>Conciergerie</div>
+        <h2><span class="mask"><span style="--d:.4s">Conciergerie</span></span></h2>
+        <div class="sep draw" style="--d:1s"></div>
+        <p class="rv" style="--d:1.3s">Un assistant, en temps réel.</p>
+      </div>
+
+      <div class="viz">
+        <div class="netplane p3d">
+          <svg class="net" id="net" viewBox="0 0 1020 780"></svg>
+          <span class="wave"></span><span class="wave"></span>
+          <div id="pts"></div>
+          <div id="nodes" class="p3d"></div>
+          <div class="hub pop" id="hub" style="--d:.5s">
+            <svg class="i"><use href="#i-chat"/></svg>
+            <span class="think"><i></i><i></i><i></i></span>
+          </div>
+        </div>
+        <div class="live fade" style="--d:1.2s"><i></i>En ligne · 24h/24</div>
+        <div class="ask" id="ask"><span id="ask-t"></span><span class="caret"></span></div>
+      </div>
+    </section>
+
+    <!-- 4 · Legacy Points -->
+    <section class="scene" data-start="31" data-name="Legacy Points" data-chap="2">
+      <div class="ghost">03</div>
+      <div class="title-col">
+        <div class="kicker rv" style="--d:.2s"><b>3</b>Legacy Points</div>
+        <h2><span class="mask"><span style="--d:.4s">Legacy Points</span></span></h2>
+        <div class="sep draw" style="--d:1s"></div>
+        <p class="rv" style="--d:1.3s">La fidélité, sur la blockchain.</p>
+      </div>
+
+      <div class="viz">
+        <div class="world p3d">
+          <div class="carousel p3d" id="carousel">
+            <div class="ring3d"></div>
+          </div>
+          <div class="coin3d p3d">
+            <div class="face"><svg><use href="#coin-face"/></svg></div>
+            <div class="face back"><svg><use href="#coin-face"/></svg></div>
+          </div>
+        </div>
+        <div id="sparks"></div>
+        <div class="lock fade" style="--d:4.4s"><svg class="i"><use href="#i-lock"/></svg>Blockchain vérifiée</div>
+        <div class="amount rv" style="--d:3s"><b id="lp-count">0</b><span>LP</span></div>
+        <div class="perk" style="left:250px"><div class="pf" style="--d:5.4s; --fx:260px"><span class="dot"><svg class="i"><use href="#i-pct"/></svg></span><span class="l">Réductions</span></div></div>
+        <div class="perk dark" style="left:510px"><div class="pf" style="--d:5.7s; --fx:0px"><span class="dot"><svg class="i"><use href="#i-star"/></svg></span><span class="l">Exclusif</span></div></div>
+        <div class="perk" style="left:770px"><div class="pf" style="--d:6s; --fx:-260px"><span class="dot"><svg class="i"><use href="#i-gem"/></svg></span><span class="l">Expériences</span></div></div>
+      </div>
+    </section>
+
+    <!-- 5 · Signature -->
+    <section class="scene outro" data-start="41.5" data-name="Signature">
+      <div class="center">
+        <div class="icons">
+          <div class="disc flip" style="--d:.2s"><svg class="i"><use href="#i-key"/></svg></div>
+          <div class="disc flip" style="--d:.35s"><svg class="i"><use href="#i-chat"/></svg></div>
+          <div class="disc flip" style="--d:.5s"><svg class="i"><use href="#i-coin"/></svg></div>
+        </div>
+        <div class="logo-legacy" id="legacy2"></div>
+        <div class="logo-group" style="--d:2s">Hospitality Group</div>
+        <p class="tagline rv" style="--d:3s">Chaque séjour, pensé pour vous.</p>
+      </div>
+    </section>
+
+    <div class="frame">
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+      <span class="sig">LHG</span>
+      <span class="chap" id="chap"><span id="chap-n">01 / 03</span><i><b></b></i><i><b></b></i><i><b></b></i></span>
+    </div>
+
+    <div class="grain"></div>
+    <div class="curtain" id="curtain"><span>LHG</span></div>
+  </div>
+
+  <div class="controls" id="controls">
+    <button class="main" id="play" type="button" aria-label="Pause">
+      <svg viewBox="0 0 16 16" id="play-ico"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>
+    </button>
+    <button id="restart" type="button" aria-label="Recommencer">
+      <svg viewBox="0 0 16 16"><path d="M8 2.5a5.5 5.5 0 1 1-5.2 3.7l1.4.5A4 4 0 1 0 8 4v2L4.5 3.2 8 .5z"/></svg>
+    </button>
+    <div class="track" id="track"><span class="rail"></span><span class="fill" id="fill"></span></div>
+    <span class="time" id="time">0:00 / 0:48</span>
+    <button id="fs" type="button" aria-label="Plein écran">
+      <svg viewBox="0 0 16 16"><path d="M2 6V2h4v1.5H3.5V6zM10 2h4v4h-1.5V3.5H10zM3.5 10v2.5H6V14H2v-4zM12.5 10H14v4h-4v-1.5h2.5z"/></svg>
+    </button>
+  </div>
+
+  <script>
+    const DURATION = 48;
+    const CURTAIN = 1.3;
+    const $ = (id) => document.getElementById(id);
+    const stage = $('stage');
+
+    // « Legacy » lettre par lettre (retournement 3D)
+    ['legacy1', 'legacy2'].forEach((id) => {
+      $(id).innerHTML = [...'Legacy'].map((c, i) => `<span class="mask"><span style="--i:${i}">${c}</span></span>`).join('');
+    });
+
+    // ---------- Bienvenue : 6 préférences sur le plan d'orbite ----------
+    const PREFS = ['i-pillow', 'i-glass', 'i-leaf', 'i-moon', 'i-heart', 'i-thermo'];
+    $('orbit').innerHTML = PREFS.map((ico, k) => {
+      const a = (-90 + k * 60) * Math.PI / 180;
+      const x = 510 + 390 * Math.cos(a), y = 430 + 390 * Math.sin(a);
+      const fx = Math.round(Math.cos(a) * 500), fy = Math.round(Math.sin(a) * 500);
+      return `<div class="slot p3d" style="left:${x}px; top:${y}px">
+        <div class="fly p3d" style="--d:${1 + k * .22}s; --fx:${fx}px; --fy:${fy}px">
+          <span class="shadow"></span>
+          <div class="badge" style="--p:${5.4 + k * .35}s">
+            <span class="face"><svg class="i"><use href="#${ico}"/></svg></span>
+            <span class="ok"><svg class="i"><use href="#i-check"/></svg></span>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // ---------- Conciergerie : services reliés au hub ----------
+    const HUB = { x: 510, y: 420 };
+    const NODES = [
+      { id: 'exp',  ico: 'i-pin',  x: 850, y: 230 },
+      { id: 'rest', ico: 'i-fork', x: 170, y: 230 },
+      { id: 'spa',  ico: 'i-spa',  x: 880, y: 590 },
+      { id: 'car',  ico: 'i-car',  x: 140, y: 590 },
+      { id: 'room', ico: 'i-bell', x: 510, y: 660 },
+    ];
+    $('net').innerHTML =
+      `<ellipse cx="${HUB.x}" cy="${HUB.y}" rx="400" ry="260"/><ellipse cx="${HUB.x}" cy="${HUB.y}" rx="250" ry="160"/>` +
+      NODES.map((n, k) => `<line id="l-${n.id}" x1="${HUB.x}" y1="${HUB.y}" x2="${n.x}" y2="${n.y}" pathLength="1" style="--d:${.9 + k * .15}s"/>`).join('');
+    $('nodes').innerHTML = NODES.map((n, k) => `
+      <div class="node p3d" id="n-${n.id}" style="left:${n.x}px; top:${n.y}px">
+        <div class="lift p3d">
+          <span class="dot pop" style="--d:${1 + k * .15}s"><svg class="i"><use href="#${n.ico}"/></svg></span>
+          <span class="chip" id="chip-${n.id}"></span>
+        </div>
+      </div>`).join('');
+    $('pts').innerHTML = NODES.map((n, k) => [0, 1].map((j) =>
+      `<span class="pt" style="--x:${n.x - HUB.x}px; --y:${n.y - HUB.y}px; --d:${2 + k * .3 + j * 1.1}s"></span>`).join('')).join('');
+
+    // ---------- Legacy Points : carrousel de 12 blocs autour de la pièce ----------
+    const N_BLOCKS = 12, RADIUS = 390;
+    $('carousel').insertAdjacentHTML('beforeend', Array.from({ length: N_BLOCKS }, (_, k) => {
+      const n = 10471 + k;
+      return `<div class="slot3d p3d" style="transform: rotateY(${k * 360 / N_BLOCKS}deg) translateZ(${RADIUS}px)">
+        <div class="blk ${k === 0 ? 'hot' : ''}" style="--d:${.5 + k * .08}s"><b>${k === 0 ? '+1 500' : '#' + String(n).slice(0, 2) + ' ' + String(n).slice(2)}</b><i></i><i></i></div>
+      </div>`;
+    }).join(''));
+    $('sparks').innerHTML = Array.from({ length: 10 }, (_, k) => {
+      const side = k % 2 ? 1 : -1;
+      return `<span class="spark" style="--x:${side * (300 + (k * 37) % 120)}px; --y:${((k * 53) % 60) - 30}px; --d:${2.8 + k * .12}s"></span>`;
+    }).join('');
+
+    // ---------- mise à l'échelle ----------
+    function fit() { stage.style.setProperty('--s', Math.min(innerWidth / 1920, innerHeight / 1080)); }
+    addEventListener('resize', fit);
+    fit();
+
+    const clamp = (x) => Math.min(1, Math.max(0, x));
+    const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+    const typed = (text, t, from, cps) => text.slice(0, Math.max(0, Math.floor((t - from) * cps)));
+    const nf = (n) => new Intl.NumberFormat('fr-FR').format(n).replace(/ /g, ' ');
+
+    function chip(id, text, on) {
+      const el = $('chip-' + id);
+      if (on) el.textContent = text;
+      el.classList.toggle('show', on);
+    }
+    function lit(id, on) {
+      $('n-' + id).classList.toggle('lit', on);
+      $('l-' + id).classList.toggle('lit', on);
+    }
+
+    // texte tapé, services allumés, compteur
+    const TICKS = {
+      3: (t) => {
+        const q1 = 'Que faire ce soir ?', q2 = 'Un massage demain ?';
+        $('ask-t').textContent = t < 6.2 ? typed(q1, t, 2.4, 20) : typed(q2, t, 6.4, 20);
+        $('ask').classList.toggle('show', (t >= 2.3 && t < 6) || t >= 6.3);
+        $('hub').classList.toggle('thinking', (t >= 3.5 && t < 4.4) || (t >= 7.5 && t < 8.3));
+        lit('exp', t >= 4.4 && t < 7.5);
+        chip('exp', 'Galerie · 19h', t >= 4.6);
+        lit('spa', t >= 8.3);
+        lit('room', t >= 8.7);
+        chip('spa', 'Spa · 10h ✓', t >= 8.5);
+      },
+      4: (t) => { $('lp-count').textContent = nf(Math.round(easeOut(clamp((t - 3.1) / 2)) * 1500)); },
+    };
+
+    // ---------- horloge ----------
+    const scenes = [...document.querySelectorAll('.scene')].map((el, i, all) => ({
+      el, start: Number(el.dataset.start),
+      end: i + 1 < all.length ? Number(all[i + 1].dataset.start) : DURATION,
+      chap: el.dataset.chap != null ? Number(el.dataset.chap) : null,
+    }));
+    const playing = { on: true };
+    let t = 0, last = performance.now(), active = -1;
+
+    const sceneAt = (time) => Math.max(0, scenes.findIndex((s) => time >= s.start && time < s.end));
+    let looped = false; // le rideau de fin → début ne s'affiche qu'après un premier tour
+
+    function activate(i, local) {
+      scenes.forEach((s, j) => s.el.classList.toggle('on', j === i));
+      active = i;
+      scenes[i].el.getAnimations({ subtree: true }).forEach((a) => {
+        try { a.currentTime = Math.max(0, local) * 1000; } catch (e) {}
+      });
+    }
+
+    const cuts = scenes.slice(1).map((s) => s.start).concat(DURATION);
+    function drawCurtain(time) {
+      let y = 110;
+      for (const c of cuts) {
+        const p = (time - (c - CURTAIN / 2)) / CURTAIN;
+        const p2 = (time + DURATION - (c - CURTAIN / 2)) / CURTAIN;
+        const q = p >= 0 && p <= 1 ? p : (c === DURATION && looped && p2 >= 0 && p2 <= 1 ? p2 : null);
+        if (q != null) {
+          const e = q < .5 ? 4 * q * q * q : 1 - Math.pow(-2 * q + 2, 3) / 2;
+          y = 110 - e * 250;
+          break;
+        }
+      }
+      $('curtain').style.transform = `translateY(${y}%)`;
+    }
+
+    const chapBars = [...document.querySelectorAll('#chap i b')];
+    function drawChrome(i, time) {
+      const s = scenes[i];
+      $('chap').classList.toggle('show', s.chap != null);
+      if (s.chap == null) return;
+      $('chap-n').textContent = `0${s.chap + 1} / 03`;
+      chapBars.forEach((b, k) => {
+        const sc = scenes.find((x) => x.chap === k);
+        const p = k < s.chap ? 1 : k > s.chap ? 0 : clamp((time - sc.start) / (sc.end - sc.start));
+        b.style.transform = `scaleX(${p})`;
+      });
+    }
+
+    const fmt = (x) => Math.floor(x / 60) + ':' + String(Math.floor(x % 60)).padStart(2, '0');
+    function render(time, seek) {
+      const i = sceneAt(time);
+      if (i !== active || seek) activate(i, time - scenes[i].start);
+      if (TICKS[i]) TICKS[i](time - scenes[i].start);
+      drawCurtain(time);
+      drawChrome(i, time);
+      $('fill').style.width = (time / DURATION * 100) + '%';
+      $('time').textContent = `${fmt(time)} / ${fmt(DURATION)}`;
+    }
+
+    function frame(now) {
+      // le 1er horodatage de requestAnimationFrame peut précéder performance.now() : jamais de temps négatif
+      const dt = Math.min(.1, Math.max(0, (now - last) / 1000));
+      last = now;
+      if (playing.on) {
+        t += dt;
+        if (t >= DURATION) { t -= DURATION; looped = true; render(t, true); }
+      }
+      render(t, false);
+      requestAnimationFrame(frame);
+    }
+
+    function seek(time) {
+      t = Math.min(DURATION - .01, Math.max(0, time));
+      if (t < 1) looped = false;
+      render(t, true);
+    }
+
+    function setPlaying(on) {
+      playing.on = on;
+      stage.classList.toggle('paused', !on);
+      $('play').setAttribute('aria-label', on ? 'Pause' : 'Lecture');
+      $('play-ico').innerHTML = on
+        ? '<rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/>'
+        : '<path d="M4 2.2v11.6L13.5 8z"/>';
+    }
+
+    // ---------- lecteur ----------
+    const track = $('track');
+    scenes.forEach((s) => {
+      if (!s.start) return;
+      const m = document.createElement('span');
+      m.className = 'mark';
+      m.style.left = (s.start / DURATION * 100) + '%';
+      m.title = s.el.dataset.name;
+      track.appendChild(m);
+    });
+    track.addEventListener('click', (e) => {
+      const r = track.getBoundingClientRect();
+      seek((e.clientX - r.left) / r.width * DURATION);
+    });
+    $('play').addEventListener('click', () => setPlaying(!playing.on));
+    $('restart').addEventListener('click', () => { seek(0); setPlaying(true); });
+    $('fs').addEventListener('click', toggleFs);
+    function toggleFs() {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen?.();
+    }
+    addEventListener('keydown', (e) => {
+      if (e.key === ' ') { e.preventDefault(); setPlaying(!playing.on); }
+      if (e.key === 'ArrowRight') seek(t + 5);
+      if (e.key === 'ArrowLeft') seek(t - 5);
+      if (e.key === 'f' || e.key === 'F') toggleFs();
+      if (e.key === 'r' || e.key === 'R') { seek(0); setPlaying(true); }
+      wake();
+    });
+
+    let idleTimer;
+    function wake() {
+      document.body.classList.remove('idle');
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => { if (playing.on) document.body.classList.add('idle'); }, 2500);
+    }
+    addEventListener('mousemove', wake);
+    addEventListener('touchstart', wake, { passive: true });
+
+    // pilotage / export vidéo : MD.seek(s), MD.pause(), MD.play()
+    window.MD = { seek, play: () => setPlaying(true), pause: () => setPlaying(false), duration: DURATION };
+
+    const params = new URLSearchParams(location.search);
+    if (params.has('t')) seek(Number(params.get('t')));
+    if (params.has('pause')) setPlaying(false);
+
+    document.fonts.ready.then(() => {
+      render(t, true);
+      last = performance.now();
+      requestAnimationFrame(frame);
+      wake();
+    });
+  </script>
+</body>
+</html>

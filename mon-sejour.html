@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon séjour — Shelter&amp;Co</title>
+  <script>
+    // Arrivée depuis la tuile « Mon séjour » : la photo démarre à la position de la tuile
+    try {
+      const z = JSON.parse(sessionStorage.getItem('lhg-room-zoom') || 'null');
+      if (z && z.width > 0) {
+        const root = document.documentElement;
+        root.classList.add('zoom-in');
+        ['top', 'left', 'width', 'height'].forEach((k) => root.style.setProperty('--z-' + k, z[k] + 'px'));
+      }
+      sessionStorage.removeItem('lhg-room-zoom');
+    } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/urbain.css">
+  <style>
+    :root { --accent: var(--coral); }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px 24px 72px;
+      animation: rise .8s var(--ease) both;
+    }
+
+    .back { margin-bottom: 28px; }
+
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: clamp(2.6rem, 7vw, 4.8rem);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+    }
+
+    .ref-tag {
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: var(--glass);
+      border: 1px solid var(--stroke);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    /* ---------- Chambre ---------- */
+    .room {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 34px 0 18px;
+    }
+
+    .room h2 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.4rem, 3vw, 2.1rem);
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    .room .meta { color: var(--muted); }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: minmax(260px, 56vh) minmax(170px, 30vh);
+      gap: 14px;
+    }
+
+    .gallery figure {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius);
+      border: 1px solid var(--stroke);
+      background: var(--bg-2);
+      box-shadow: var(--shadow);
+      transition: transform .5s var(--ease), box-shadow .5s var(--ease);
+    }
+
+    .gallery figure:first-child { grid-column: 1 / -1; }
+
+    .gallery figure:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-up);
+    }
+
+    .gallery img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 1s var(--ease);
+    }
+
+    .gallery figure:hover img { transform: scale(1.05); }
+
+    .gallery .open {
+      display: block;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: none;
+      background: none;
+      cursor: zoom-in;
+    }
+
+    .gallery figcaption {
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(18, 19, 22, 0.5);
+      border: 1px solid var(--stroke);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      pointer-events: none;
+    }
+
+    /* ---------- Agrandissement des photos ---------- */
+    .lightbox {
+      width: 100vw;
+      height: 100vh;
+      max-width: none;
+      max-height: none;
+      margin: 0;
+      padding: 0;
+      border: none;
+      background: rgba(12, 13, 15, 0.82);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      color: var(--text);
+    }
+
+    .lightbox::backdrop { background: transparent; }
+
+    .lightbox[open] {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      animation: lb-in .3s ease both;
+    }
+
+    .lb-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 18px 16px 24px;
+    }
+
+    .lb-bar .count { color: var(--muted); margin-left: 12px; }
+
+    .lb-stage {
+      position: relative;
+      display: grid;
+      place-items: center;
+      padding: 8px 84px 28px;
+      min-height: 0;
+    }
+
+    .lb-stage img {
+      max-width: 100%;
+      max-height: calc(100vh - 120px);
+      object-fit: contain;
+      border-radius: var(--radius);
+      box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.8);
+      animation: lb-img .4s var(--ease) both;
+    }
+
+    .lb-btn {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 1px solid var(--stroke-2);
+      background: var(--glass);
+      color: var(--text);
+      font-size: 1.1rem;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: background .2s ease, color .2s ease;
+    }
+
+    .lb-btn:hover { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+    .lb-prev, .lb-next { position: absolute; top: 50%; transform: translateY(-50%); }
+    .lb-prev { left: 18px; }
+    .lb-next { right: 18px; }
+
+    @keyframes lb-in  { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes lb-img { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+
+    /* ---------- Infos du séjour ---------- */
+    .info {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.3fr;
+      grid-template-areas:
+        "arr dep addr"
+        "cal cal addr";
+      gap: 14px;
+      margin-top: 36px;
+    }
+
+    .cell {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+      padding: 22px;
+      min-height: 190px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 28px;
+      border-radius: var(--radius);
+      background: var(--card-bg);
+      border: 1px solid var(--stroke);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: var(--shadow);
+      transition: transform .45s var(--ease), box-shadow .45s var(--ease), border-color .45s ease;
+    }
+
+    /* halo de couleur : dégradé qui épouse l'arrondi (pas de cercle flouté qui déborde) */
+    .cell::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(360px 260px at 100% 0%, color-mix(in srgb, var(--c, var(--accent)) 32%, transparent), transparent 70%);
+      opacity: .75;
+      z-index: -1;
+      pointer-events: none;
+      transition: opacity .45s ease;
+    }
+
+    .cell:hover {
+      transform: translateY(-4px);
+      border-color: color-mix(in srgb, var(--c, var(--accent)) 45%, transparent);
+    }
+
+    .cell-arr  { grid-area: arr;  --c: var(--coral); }
+    .cell-dep  { grid-area: dep;  --c: var(--violet); }
+    .cell-addr { grid-area: addr; --c: var(--blue); }
+
+    .cell .label { color: var(--muted); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+    .date {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+    }
+
+    .date small {
+      display: block;
+      margin-top: 10px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 1rem;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .sub { color: var(--muted); margin-top: 8px; }
+    .perk { color: #5F656E; margin-top: 8px; }
+
+    .nights {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--c, var(--accent)) 22%, transparent);
+      border: 1px solid color-mix(in srgb, var(--c, var(--accent)) 50%, transparent);
+      color: var(--text);
+    }
+
+    .address {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.15rem, 2vw, 1.45rem);
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+    }
+
+    .address .amp { font-weight: 800; }
+
+    .map-link {
+      display: inline-flex;
+      align-self: flex-start;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke-2);
+      background: var(--glass);
+      text-decoration: none;
+      transition: background .2s ease, color .2s ease;
+    }
+
+    .map-link:hover { background: var(--blue); color: var(--on-accent); border-color: var(--blue); }
+
+    .cal-wrap { grid-area: cal; display: flex; flex-direction: column; gap: 10px; }
+
+    .cal-btn {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 22px 26px;
+      border: none;
+      border-radius: var(--radius);
+      background: linear-gradient(110deg, var(--coral), color-mix(in srgb, var(--coral) 55%, var(--violet)));
+      color: var(--on-accent);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 20px 40px -18px color-mix(in srgb, var(--coral) 70%, transparent);
+      transition: transform .45s var(--ease), box-shadow .45s var(--ease), filter .3s ease;
+    }
+
+    .cal-btn:hover { transform: translateY(-4px); filter: brightness(1.06); }
+
+    .cal-btn .plus {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(18, 19, 22, 0.15);
+      font-weight: 400;
+      font-size: 1.4rem;
+      line-height: 1;
+    }
+
+    .missing {
+      padding: 48px 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.3rem;
+    }
+
+    @media (max-width: 760px) {
+      main { padding: 22px 16px 56px; }
+      .gallery { grid-template-rows: 260px 150px; gap: 10px; }
+      .gallery figcaption { left: 10px; bottom: 10px; padding: 5px 10px; }
+      .lb-stage { padding: 8px 16px 90px; }
+      .lb-prev, .lb-next { top: auto; bottom: 24px; transform: none; }
+      .lb-stage img { max-height: calc(100vh - 200px); }
+      .info {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        grid-template-areas:
+          "arr dep"
+          "cal cal"
+          "addr addr";
+      }
+      .cell { min-height: 160px; padding: 18px; }
+    }
+
+
+    /* éléments posés sur photo ou fond sombre : texte clair */
+    .gallery figcaption { color: #F5F5F7; border-color: rgba(255, 255, 255, 0.22); }
+    .lightbox { color: #F5F5F7; }
+    .lb-bar .count { color: rgba(245, 245, 247, 0.6); }
+    .lb-btn { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.25); color: #F5F5F7; }
+
+    /* photo affichée dès le premier rendu à la position de la tuile, puis remplacée par .zoom (JS) */
+    .zoom-in body::after {
+      content: '';
+      position: fixed;
+      z-index: 100;
+      top: var(--z-top);
+      left: var(--z-left);
+      width: var(--z-width);
+      height: var(--z-height);
+      border-radius: 26px;
+      background: url('images/chambre-412/chambre.jpg') center / cover;
+    }
+
+    .zoom-in.zoom-ready body::after { display: none; }
+    .zoom-in main { opacity: 0; }
+
+    .zoom {
+      position: fixed;
+      z-index: 100;
+      background: center / cover no-repeat;
+      box-shadow: 0 30px 60px -28px rgba(60, 45, 30, 0.45);
+      pointer-events: none;
+    }
+
+    /* « + » dessiné en icône : parfaitement centré dans son rond */
+    .cal-btn .plus svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+    }
+
+    /* menu des calendriers */
+    .cal-btn .plus { transition: transform .35s var(--ease); }
+    .cal-btn.open .plus { transform: rotate(45deg); }
+
+    .cal-menu {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      animation: rise .35s var(--ease) both;
+    }
+
+    .cal-menu[hidden] { display: none; }
+
+    .cal-opt {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--stroke);
+      background: #fff;
+      color: var(--text);
+      text-decoration: none;
+      box-shadow: var(--shadow);
+      transition: transform .35s var(--ease), border-color .25s ease;
+    }
+
+    .cal-opt:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--coral) 55%, transparent); }
+
+    .cal-opt b { display: block; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 0.98rem; }
+    .cal-opt small { display: block; margin-top: 3px; color: var(--muted); font-size: 0.62rem; }
+
+    .cal-ico {
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--ico);
+      color: #fff;
+    }
+
+    .cal-ico svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+    .cal-go { margin-left: auto; color: var(--muted); }
+
+    @media (max-width: 760px) {
+      .cal-menu { grid-template-columns: minmax(0, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <main>
+    <a class="back mono" id="back" href="shelter-co.html#espace">← Mon espace</a>
+
+    <div class="head">
+      <h1>Mon séjour</h1>
+      <span class="ref-tag mono" id="ref">Réservation —</span>
+    </div>
+
+    <div id="content"></div>
+  </main>
+
+  <dialog class="lightbox" id="lightbox" aria-label="Photo agrandie">
+    <div class="lb-bar mono">
+      <span><span id="lb-caption"></span><span class="count" id="lb-count"></span></span>
+      <button class="lb-btn" id="lb-close" type="button" aria-label="Fermer">✕</button>
+    </div>
+    <div class="lb-stage" id="lb-stage">
+      <img id="lb-img" alt="">
+      <button class="lb-btn lb-prev" id="lb-prev" type="button" aria-label="Photo précédente">←</button>
+      <button class="lb-btn lb-next" id="lb-next" type="button" aria-label="Photo suivante">→</button>
+    </div>
+  </dialog>
+
+  <script>
+    // Données de démonstration — à remplacer par la vraie base de réservations
+    const RESERVATIONS = {
+      '012345': {
+        room: { number: '412', type: 'Suite Deluxe', guests: '2 adultes', size: '38 m²' },
+        arrival:   { date: '2026-10-12', hour: '15:00', label: 'dès' },
+        // Late check-out jusqu'à 14:00 grâce au statut Silver (heure standard : 11:00)
+        departure: { date: '2026-10-15', hour: '14:00', label: 'avant', perk: 'Late check-out · avantage membre Silver', tier: 'Silver' },
+        hotel: {
+          name: 'Shelter&Co',
+          street: '24 rue Charlot',
+          city: '75003 Paris',
+          district: 'Haut-Marais', // quartier : affiché, mais pas envoyé à l'itinéraire
+          country: 'France',
+        },
+        photos: [
+          { src: 'images/chambre-412/chambre.jpg',     caption: 'Chambre' },
+          { src: 'images/chambre-412/salle-d-eau.jpg', caption: "Salle d'eau" },
+          { src: 'images/chambre-412/dressing.jpg',    caption: 'Dressing' },
+        ],
+      },
+    };
+
+    // Calendriers proposés par le bouton « Ajouter à mon calendrier »
+    const CAL_OPTIONS = [
+      { id: 'apple',   name: 'Calendrier Apple', hint: 'iPhone · iPad · Mac', color: '#17181B', newTab: false },
+      { id: 'google',  name: 'Google Agenda',    hint: 'Android · Gmail',     color: '#2F62D6', newTab: true },
+      { id: 'outlook', name: 'Outlook',          hint: 'Outlook.com · Hotmail', color: '#0F6CBD', newTab: true },
+    ];
+
+    // Site en ligne (GitHub Pages) : pas de serveur serveur.py, donc pas d'API /api/…
+    const HAS_SERVER = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+    const ref = new URLSearchParams(location.search).get('ref');
+    const data = ref && RESERVATIONS[ref];
+    const content = document.getElementById('content');
+
+    if (ref) {
+      document.getElementById('ref').textContent = 'Réservation n° ' + ref;
+      document.getElementById('back').href =
+        'shelter-co.html?ref=' + encodeURIComponent(ref) + '#espace';
+    }
+
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    function formatDate(iso) {
+      const d = new Date(iso + 'T12:00:00');
+      return {
+        day: d.toLocaleDateString('fr-FR', { day: '2-digit' }),
+        month: d.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', ''),
+        full: d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+      };
+    }
+
+    if (!data) {
+      content.innerHTML = '<p class="missing">Aucune réservation trouvée.</p>';
+      document.documentElement.classList.remove('zoom-in');
+    } else {
+      const a = formatDate(data.arrival.date);
+      const d = formatDate(data.departure.date);
+      const nights = Math.round(
+        (new Date(data.departure.date) - new Date(data.arrival.date)) / 86400000);
+      const h = data.hotel;
+      const fullAddress = `${h.street}, ${h.city}, ${h.country}`;
+      const hotelName = esc(h.name).replace('&amp;', '<span class="amp">&amp;</span>');
+
+      content.innerHTML = `
+        <section class="room">
+          <h2>Chambre ${esc(data.room.number)} — ${esc(data.room.type)}</h2>
+          <span class="meta mono">${esc(data.room.size)} · ${esc(data.room.guests)}</span>
+        </section>
+
+        <section class="gallery" aria-label="Photos de la chambre">
+          ${data.photos.map((p, i) => `
+            <figure>
+              <button class="open" type="button" data-index="${i}" aria-label="Agrandir : ${esc(p.caption)}">
+                <img src="${esc(p.src)}" alt="${esc(p.caption)}" loading="lazy">
+              </button>
+              <figcaption class="mono">${esc(p.caption)}</figcaption>
+            </figure>`).join('')}
+        </section>
+
+        <section class="info">
+          <div class="cell cell-arr">
+            <span class="label mono">Arrivée <span class="nights">${nights} nuit${nights > 1 ? 's' : ''}</span></span>
+            <div>
+              <div class="date">${a.day} ${a.month}<small>${esc(data.arrival.label)} ${esc(data.arrival.hour)}</small></div>
+              <p class="sub mono">${a.full}</p>
+            </div>
+          </div>
+          <div class="cell cell-dep">
+            <span class="label mono">Départ ${data.departure.tier ? `<span class="nights ${data.departure.tier === 'Silver' ? 'silver' : ''}">${esc(data.departure.tier)}</span>` : ''}</span>
+            <div>
+              <div class="date">${d.day} ${d.month}<small>${esc(data.departure.label)} ${esc(data.departure.hour)}</small></div>
+              ${data.departure.perk ? `<p class="perk mono">${esc(data.departure.perk).replace('Silver', '<span class="silver-text">Silver</span>')}</p>` : ''}
+              <p class="sub mono">${d.full}</p>
+            </div>
+          </div>
+          <div class="cal-wrap">
+            <button class="cal-btn" id="add-calendar" type="button" aria-expanded="false" aria-controls="cal-menu">
+              Ajouter à mon calendrier <span class="plus" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+            </button>
+            <div class="cal-menu" id="cal-menu" hidden>
+              ${CAL_OPTIONS.map((o) => `
+                <a class="cal-opt" id="cal-${o.id}" href="#" ${o.newTab ? 'target="_blank" rel="noopener"' : ''}>
+                  <span class="cal-ico" style="--ico:${o.color}" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span>
+                  <span><b>${o.name}</b><small class="mono">${o.hint}</small></span>
+                  <span class="cal-go" aria-hidden="true">↗</span>
+                </a>`).join('')}
+            </div>
+          </div>
+          <div class="cell cell-addr">
+            <span class="label mono">Adresse de l'hôtel</span>
+            <p class="address">${hotelName}<br>${esc(h.street)}<br>${esc(h.city)}${h.district ? ' — ' + esc(h.district) : ''}<br>${esc(h.country)}</p>
+            <a class="map-link mono" target="_blank" rel="noopener"
+               href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}">
+              Itinéraire <span>↗</span>
+            </a>
+          </div>
+        </section>`;
+
+      setupCalendar(ref, data);
+
+      setupLightbox(data.photos);
+      playZoomIn();
+    }
+
+    // ---------- Agrandissement des photos ----------
+    function setupLightbox(photos) {
+      const box = document.getElementById('lightbox');
+      const img = document.getElementById('lb-img');
+      const caption = document.getElementById('lb-caption');
+      const count = document.getElementById('lb-count');
+      const pad = (n) => String(n).padStart(2, '0');
+      let index = 0;
+
+      function show(i) {
+        index = (i + photos.length) % photos.length;
+        const p = photos[index];
+        img.src = p.src;
+        img.alt = p.caption;
+        img.style.animation = 'none';
+        void img.offsetWidth;
+        img.style.animation = '';
+        caption.textContent = p.caption;
+        count.textContent = `${pad(index + 1)} / ${pad(photos.length)}`;
+      }
+
+      document.querySelectorAll('.gallery .open').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          show(Number(btn.dataset.index));
+          box.showModal();
+          document.body.style.overflow = 'hidden';
+        }));
+
+      box.addEventListener('close', () => { document.body.style.overflow = ''; });
+      document.getElementById('lb-close').addEventListener('click', () => box.close());
+      document.getElementById('lb-prev').addEventListener('click', () => show(index - 1));
+      document.getElementById('lb-next').addEventListener('click', () => show(index + 1));
+
+      // clic en dehors de la photo : fermeture
+      document.getElementById('lb-stage').addEventListener('click', (e) => {
+        if (e.target.id === 'lb-stage') box.close();
+      });
+
+      box.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') show(index - 1);
+        if (e.key === 'ArrowRight') show(index + 1);
+      });
+
+      // balayage sur mobile
+      let startX = null;
+      box.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+      box.addEventListener('touchend', (e) => {
+        if (startX === null) return;
+        const dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 50) show(index + (dx < 0 ? 1 : -1));
+        startX = null;
+      });
+    }
+
+    // ---------- Ajouter le séjour à son calendrier ----------
+    // Décalage horaire de Paris à une date donnée (« +02:00 » en été, « +01:00 » en hiver)
+    function parisOffset(date, hour) {
+      const d = new Date(`${date}T${hour}:00Z`);
+      const name = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Paris', timeZoneName: 'longOffset' })
+        .formatToParts(d).find((p) => p.type === 'timeZoneName').value; // « GMT+02:00 »
+      return name.replace('GMT', '') || '+00:00';
+    }
+
+    function setupCalendar(ref, data) {
+      const h = data.hotel;
+      const ev = {
+        title: `Séjour — ${h.name}`,
+        start: `${data.arrival.date}T${data.arrival.hour}`,
+        end: `${data.departure.date}T${data.departure.hour}`,
+        location: `${h.name}, ${h.street}, ${h.city}, ${h.country}`,
+        description:
+          `Réservation n° ${ref}\nChambre ${data.room.number} — ${data.room.type}\n` +
+          `Arrivée ${data.arrival.label} ${data.arrival.hour} · Départ ${data.departure.label} ${data.departure.hour}` +
+          (data.departure.perk ? ` (${data.departure.perk})` : ''),
+      };
+      const compact = (dt) => dt.replace(/[-:]/g, '') + '00';   // 2026-10-12T15:00 → 20261012T150000
+      const withOffset = (dt) => dt + ':00' + parisOffset(...dt.split('T'));
+
+      // Apple : événement au format calendrier, ouvert par l'appareil (comme sur le site LinkedIn) :
+      // iPhone / iPad → fiche « Ajouter au calendrier » ; Mac (Safari) → application Calendrier.
+      document.getElementById('cal-apple').href = HAS_SERVER
+        ? '/api/calendrier.ics?' + new URLSearchParams({
+            title: ev.title, start: ev.start, end: ev.end, location: ev.location, description: ev.description, uid: ref,
+          })
+        : 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsFile(ev, ref)); // site en ligne : fichier construit ici
+      // les navigateurs bloquent l'ouverture directe d'un lien data: → on le propose en fichier .ics
+      if (!HAS_SERVER) document.getElementById('cal-apple').setAttribute('download', 'Sejour-Shelter-Co.ics');
+      // Google Agenda : formulaire d'événement déjà rempli
+      document.getElementById('cal-google').href = 'https://calendar.google.com/calendar/render?' + new URLSearchParams({
+        action: 'TEMPLATE', text: ev.title, dates: `${compact(ev.start)}/${compact(ev.end)}`,
+        ctz: 'Europe/Paris', location: ev.location, details: ev.description,
+      });
+      // Outlook : fenêtre de création d'événement déjà remplie
+      document.getElementById('cal-outlook').href = 'https://outlook.live.com/calendar/0/deeplink/compose?' + new URLSearchParams({
+        path: '/calendar/action/compose', rru: 'addevent', subject: ev.title,
+        startdt: withOffset(ev.start), enddt: withOffset(ev.end), location: ev.location, body: ev.description,
+      });
+
+      // Le clic sur « Ajouter à mon calendrier » affiche les calendriers au choix
+      const btn = document.getElementById('add-calendar');
+      const menu = document.getElementById('cal-menu');
+      const toggle = (open) => {
+        menu.hidden = !open;
+        btn.setAttribute('aria-expanded', open);
+        btn.classList.toggle('open', open);
+      };
+      btn.addEventListener('click', () => toggle(menu.hidden));
+      menu.addEventListener('click', (e) => { if (e.target.closest('.cal-opt')) setTimeout(() => toggle(false), 300); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) toggle(false); });
+      document.addEventListener('click', (e) => { if (!e.target.closest('.cal-wrap')) toggle(false); });
+    }
+
+    // Événement de calendrier (.ics) — même contenu que /api/calendrier.ics du serveur
+    function icsFile(ev, uid) {
+      const esc = (s) => String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+      const dt = (s) => s.replace(/[-:]/g, '') + '00';
+      const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+      return [
+        'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Legacy Hospitality Group//Shelter&Co//FR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+        'BEGIN:VTIMEZONE', 'TZID:Europe/Paris',
+        'BEGIN:DAYLIGHT', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST', 'DTSTART:19700329T020000', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
+        'BEGIN:STANDARD', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'TZNAME:CET', 'DTSTART:19701025T030000', 'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU', 'END:STANDARD',
+        'END:VTIMEZONE',
+        'BEGIN:VEVENT', `UID:${uid}@shelterandco.legacy-hospitality`, `DTSTAMP:${stamp}`,
+        `DTSTART;TZID=Europe/Paris:${dt(ev.start)}`, `DTEND;TZID=Europe/Paris:${dt(ev.end)}`,
+        'SUMMARY:' + esc(ev.title), 'LOCATION:' + esc(ev.location), 'DESCRIPTION:' + esc(ev.description),
+        'END:VEVENT', 'END:VCALENDAR', '',
+      ].join('\r\n');
+    }
+
+    // Transition d'arrivée : la photo glisse de la position de la tuile jusqu'à sa place dans la galerie
+    function playZoomIn() {
+      const root = document.documentElement;
+      if (!root.classList.contains('zoom-in')) return;
+      const target = document.querySelector('.gallery figure');
+      const main = document.querySelector('main');
+      const done = () => root.classList.remove('zoom-in', 'zoom-ready');
+      if (!target) return done();
+      scrollTo(0, 0);
+      main.style.animation = 'none'; // pas de glissement : la photo doit atterrir pile à sa place
+      const cs = getComputedStyle(root);
+      const from = {
+        top: cs.getPropertyValue('--z-top').trim(), left: cs.getPropertyValue('--z-left').trim(),
+        width: cs.getPropertyValue('--z-width').trim(), height: cs.getPropertyValue('--z-height').trim(),
+        borderRadius: '26px',
+      };
+      const zoom = document.createElement('div');
+      zoom.className = 'zoom';
+      zoom.style.backgroundImage = `url('${data.photos[0].src}')`;
+      Object.assign(zoom.style, from);
+      document.body.appendChild(zoom);
+      root.classList.add('zoom-ready');
+      target.style.visibility = 'hidden'; // la vraie photo apparaît à l'atterrissage
+      const r = target.getBoundingClientRect();
+      const to = { top: r.top + 'px', left: r.left + 'px', width: r.width + 'px', height: r.height + 'px', borderRadius: '24px' };
+      // le reste de la page apparaît en fondu pendant le déplacement
+      main.style.opacity = '1';
+      main.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: 150, easing: 'ease', fill: 'backwards' });
+      zoom.animate([from, to], { duration: 650, easing: 'cubic-bezier(.65, 0, .25, 1)', fill: 'forwards' })
+        .onfinish = () => {
+          target.style.visibility = '';
+          done();
+          zoom.remove();
+        };
+    }
+  </script>
+</body>
+</html>
